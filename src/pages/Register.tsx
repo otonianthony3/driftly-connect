@@ -9,15 +9,49 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Register = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement registration logic
-    navigate("/login");
+    
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: role,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        toast.success("Registration successful! Please check your email to verify your account.");
+        navigate("/login");
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred during registration');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,13 +63,31 @@ const Register = () => {
         </div>
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="space-y-2">
-            <Input type="email" placeholder="Email" required />
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-2">
-            <Input type="password" placeholder="Password" required />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-2">
-            <Input type="password" placeholder="Confirm Password" required />
+            <Input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
           </div>
           <Select onValueChange={setRole} required>
             <SelectTrigger>
@@ -46,8 +98,8 @@ const Register = () => {
               <SelectItem value="client">Client</SelectItem>
             </SelectContent>
           </Select>
-          <Button type="submit" className="w-full">
-            Register
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Creating account..." : "Register"}
           </Button>
         </form>
         <div className="text-center">
