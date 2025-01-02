@@ -17,6 +17,7 @@ export type Database = {
           id: string
           membership_id: string | null
           paid_date: string | null
+          payment_intent_id: string | null
           status: string
         }
         Insert: {
@@ -26,6 +27,7 @@ export type Database = {
           id?: string
           membership_id?: string | null
           paid_date?: string | null
+          payment_intent_id?: string | null
           status: string
         }
         Update: {
@@ -35,6 +37,7 @@ export type Database = {
           id?: string
           membership_id?: string | null
           paid_date?: string | null
+          payment_intent_id?: string | null
           status?: string
         }
         Relationships: [
@@ -200,7 +203,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      notify_upcoming_contributions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
