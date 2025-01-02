@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface Notification {
   id: string;
@@ -29,6 +30,7 @@ const fetchNotifications = async (): Promise<Notification[]> => {
 };
 
 export function NotificationBell() {
+  const navigate = useNavigate();
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: fetchNotifications,
@@ -36,16 +38,22 @@ export function NotificationBell() {
 
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
 
-  const markAsRead = async (notificationId: string) => {
+  const handleNotificationClick = async (notification: Notification) => {
     try {
+      // Mark notification as read
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('id', notificationId);
+        .eq('id', notification.id);
 
       if (error) throw error;
+
+      // Navigate based on notification type
+      if (notification.type === 'payout_scheduled') {
+        navigate('/payouts/history');
+      }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('Error handling notification:', error);
     }
   };
 
@@ -73,7 +81,7 @@ export function NotificationBell() {
             <DropdownMenuItem 
               key={notification.id} 
               className="flex flex-col items-start p-4 cursor-pointer"
-              onClick={() => markAsRead(notification.id)}
+              onClick={() => handleNotificationClick(notification)}
             >
               <span className={`text-sm ${notification.read ? 'text-muted-foreground' : 'font-medium'}`}>
                 {notification.message}

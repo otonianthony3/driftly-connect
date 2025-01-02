@@ -9,6 +9,8 @@ import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import ThriftSystemDetails from "./pages/ThriftSystemDetails";
+import PayoutHistory from "./pages/PayoutHistory";
+import PayoutManagement from "./pages/PayoutManagement";
 import { NotificationBell } from "./components/NotificationBell";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
             <Route path="/thrift-system/:id" element={<ThriftSystemDetails />} />
+            <Route path="/payouts/history" element={<PayoutHistory />} />
+            <Route path="/admin/payouts" element={<PayoutManagement />} />
           </Routes>
         </BrowserRouter>
       </div>

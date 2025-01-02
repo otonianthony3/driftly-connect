@@ -124,6 +124,57 @@ export type Database = {
           },
         ]
       }
+      payouts: {
+        Row: {
+          amount: number
+          completed_date: string | null
+          created_at: string | null
+          id: string
+          member_id: string
+          payment_intent_id: string | null
+          scheduled_date: string
+          status: string
+          thrift_system_id: string
+        }
+        Insert: {
+          amount: number
+          completed_date?: string | null
+          created_at?: string | null
+          id?: string
+          member_id: string
+          payment_intent_id?: string | null
+          scheduled_date: string
+          status?: string
+          thrift_system_id: string
+        }
+        Update: {
+          amount?: number
+          completed_date?: string | null
+          created_at?: string | null
+          id?: string
+          member_id?: string
+          payment_intent_id?: string | null
+          scheduled_date?: string
+          status?: string
+          thrift_system_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_thrift_system_id_fkey"
+            columns: ["thrift_system_id"]
+            isOneToOne: false
+            referencedRelation: "thrift_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
