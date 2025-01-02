@@ -3,39 +3,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ThriftSystem {
   id: string;
   name: string;
-  amount: number;
-  frequency: string;
-  members: number;
-  maxMembers: number;
+  contribution_amount: number;
+  payout_schedule: string;
+  max_members: number;
+  memberships: {
+    id: string;
+  }[];
 }
 
-// Mock data - replace with actual API call when backend is integrated
-const fetchThriftSystems = async (): Promise<ThriftSystem[]> => {
+const fetchThriftSystems = async () => {
   console.log("Fetching thrift systems...");
-  // Simulated API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return [
-    {
-      id: "1",
-      name: "Monthly Savings Group",
-      amount: 1000,
-      frequency: "Monthly",
-      members: 8,
-      maxMembers: 12
-    },
-    {
-      id: "2",
-      name: "Weekly Contributors",
-      amount: 500,
-      frequency: "Weekly",
-      members: 5,
-      maxMembers: 10
-    }
-  ];
+  const { data, error } = await supabase
+    .from('thrift_systems')
+    .select(`
+      *,
+      memberships:memberships(id)
+    `);
+
+  if (error) throw error;
+  return data as ThriftSystem[];
 };
 
 const ClientDashboard = () => {
@@ -46,12 +37,35 @@ const ClientDashboard = () => {
     queryFn: fetchThriftSystems,
   });
 
-  const handleJoinSystem = (systemId: string) => {
-    console.log("Joining system:", systemId);
-    toast({
-      title: "Request Sent",
-      description: "Your request to join the thrift system has been sent to the admin.",
-    });
+  const handleJoinSystem = async (systemId: string) => {
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      const { error } = await supabase
+        .from('memberships')
+        .insert([
+          {
+            thrift_system_id: systemId,
+            user_id: userData.user.id,
+            status: 'pending'
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Request Sent",
+        description: "Your request to join the thrift system has been sent to the admin.",
+      });
+    } catch (error) {
+      console.error("Error joining system:", error);
+      toast({
+        title: "Error",
+        description: "Failed to join the system. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -77,7 +91,7 @@ const ClientDashboard = () => {
             <CardHeader>
               <CardTitle>{system.name}</CardTitle>
               <CardDescription>
-                {system.frequency} contribution of ${system.amount}
+                {system.payout_schedule} contribution of ${system.contribution_amount}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -85,15 +99,15 @@ const ClientDashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Members</span>
                   <span className="font-medium">
-                    {system.members}/{system.maxMembers}
+                    {system.memberships.length}/{system.max_members}
                   </span>
                 </div>
                 <Button 
                   className="w-full"
                   onClick={() => handleJoinSystem(system.id)}
-                  disabled={system.members >= system.maxMembers}
+                  disabled={system.memberships.length >= system.max_members}
                 >
-                  {system.members >= system.maxMembers ? "Full" : "Join System"}
+                  {system.memberships.length >= system.max_members ? "Full" : "Join System"}
                 </Button>
               </div>
             </CardContent>

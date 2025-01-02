@@ -9,6 +9,118 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      contributions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          due_date: string
+          id: string
+          membership_id: string | null
+          paid_date: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          due_date: string
+          id?: string
+          membership_id?: string | null
+          paid_date?: string | null
+          status: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          membership_id?: string | null
+          paid_date?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contributions_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memberships: {
+        Row: {
+          id: string
+          join_date: string | null
+          status: string
+          thrift_system_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          join_date?: string | null
+          status: string
+          thrift_system_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          join_date?: string | null
+          status?: string
+          thrift_system_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_thrift_system_id_fkey"
+            columns: ["thrift_system_id"]
+            isOneToOne: false
+            referencedRelation: "thrift_systems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -38,6 +150,50 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      thrift_systems: {
+        Row: {
+          admin_id: string
+          contribution_amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          max_members: number
+          name: string
+          payout_schedule: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_id: string
+          contribution_amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          max_members: number
+          name: string
+          payout_schedule: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_id?: string
+          contribution_amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          max_members?: number
+          name?: string
+          payout_schedule?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thrift_systems_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

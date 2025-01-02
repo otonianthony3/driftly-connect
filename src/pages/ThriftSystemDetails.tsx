@@ -2,64 +2,88 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Users, Calendar, DollarSign } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ThriftSystemDetails {
   id: string;
   name: string;
-  amount: number;
-  frequency: string;
-  members: {
+  contribution_amount: number;
+  payout_schedule: string;
+  max_members: number;
+  description: string;
+  memberships: {
     id: string;
-    name: string;
-    joinedAt: string;
-    contributionsMade: number;
+    status: string;
+    join_date: string;
+    profiles: {
+      id: string;
+      full_name: string;
+    };
+    contributions: {
+      id: string;
+      amount: number;
+      status: string;
+      paid_date: string;
+    }[];
   }[];
-  maxMembers: number;
-  startDate: string;
-  nextContributionDate: string;
-  totalContributed: number;
-  targetAmount: number;
 }
 
-// Mock data - replace with actual API call when backend is integrated
 const fetchThriftSystemDetails = async (id: string): Promise<ThriftSystemDetails> => {
   console.log("Fetching thrift system details for:", id);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return {
-    id: "1",
-    name: "Monthly Savings Group",
-    amount: 1000,
-    frequency: "Monthly",
-    members: [
-      {
-        id: "1",
-        name: "John Doe",
-        joinedAt: "2024-01-01",
-        contributionsMade: 3,
-      },
-      {
-        id: "2",
-        name: "Jane Smith",
-        joinedAt: "2024-01-02",
-        contributionsMade: 3,
-      },
-    ],
-    maxMembers: 12,
-    startDate: "2024-01-01",
-    nextContributionDate: "2024-04-01",
-    totalContributed: 6000,
-    targetAmount: 12000,
-  };
+  const { data, error } = await supabase
+    .from('thrift_systems')
+    .select(`
+      *,
+      memberships (
+        id,
+        status,
+        join_date,
+        profiles (
+          id,
+          full_name
+        ),
+        contributions (
+          id,
+          amount,
+          status,
+          paid_date
+        )
+      )
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data;
 };
 
 const ThriftSystemDetails = () => {
-  // In a real app, you'd get this from the URL params
-  const systemId = "1";
-
+  const { id } = useParams<{ id: string }>();
+  
   const { data: system, isLoading } = useQuery({
-    queryKey: ['thriftSystem', systemId],
-    queryFn: () => fetchThriftSystemDetails(systemId),
+    queryKey: ['thriftSystem', id],
+    queryFn: () => fetchThriftSystemDetails(id!),
+    enabled: !!id,
   });
+
+  const handleMembershipAction = async (membershipId: string, action: 'approve' | 'reject') => {
+    try {
+      const { error } = await supabase
+        .from('memberships')
+        .update({ status: action === 'approve' ? 'active' : 'rejected' })
+        .eq('id', membershipId);
+
+      if (error) throw error;
+
+      toast.success(`Member ${action}d successfully`);
+    } catch (error) {
+      console.error(`Error ${action}ing member:`, error);
+      toast.error(`Failed to ${action} member`);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -71,7 +95,13 @@ const ThriftSystemDetails = () => {
 
   if (!system) return null;
 
-  const progressPercentage = (system.totalContributed / system.targetAmount) * 100;
+  const activeMembers = system.memberships.filter(m => m.status === 'active');
+  const pendingMembers = system.memberships.filter(m => m.status === 'pending');
+  const totalContributions = system.memberships
+    .flatMap(m => m.contributions)
+    .reduce((sum, c) => sum + (c.status === 'completed' ? c.amount : 0), 0);
+  const targetAmount = system.contribution_amount * system.max_members;
+  const progressPercentage = (totalContributions / targetAmount) * 100;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -89,10 +119,10 @@ const ThriftSystemDetails = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${system.totalContributed}</div>
+            <div className="text-2xl font-bold">${totalContributions}</div>
             <Progress value={progressPercentage} className="mt-2" />
             <p className="text-xs text-muted-foreground mt-2">
-              Target: ${system.targetAmount}
+              Target: ${targetAmount}
             </p>
           </CardContent>
         </Card>
@@ -104,25 +134,25 @@ const ThriftSystemDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {system.members.length}/{system.maxMembers}
+              {activeMembers.length}/{system.max_members}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Active participants
+              {pendingMembers.length} pending requests
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Next Contribution</CardTitle>
+            <CardTitle className="text-sm font-medium">Schedule</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {new Date(system.nextContributionDate).toLocaleDateString()}
+            <div className="text-2xl font-bold capitalize">
+              {system.payout_schedule}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {system.frequency} payment of ${system.amount}
+              ${system.contribution_amount} per cycle
             </p>
           </CardContent>
         </Card>
@@ -130,22 +160,51 @@ const ThriftSystemDetails = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Members List</CardTitle>
+          <CardTitle>Members</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="divide-y">
-            {system.members.map((member) => (
+            {pendingMembers.map((member) => (
               <div key={member.id} className="py-4 flex justify-between items-center">
                 <div>
-                  <p className="font-medium">{member.name}</p>
+                  <p className="font-medium">{member.profiles.full_name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Joined {new Date(member.joinedAt).toLocaleDateString()}
+                    Pending Approval
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleMembershipAction(member.id, 'approve')}
+                  >
+                    Approve
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleMembershipAction(member.id, 'reject')}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {activeMembers.map((member) => (
+              <div key={member.id} className="py-4 flex justify-between items-center">
+                <div>
+                  <p className="font-medium">{member.profiles.full_name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Joined {new Date(member.join_date).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">{member.contributionsMade} contributions</p>
+                  <p className="font-medium">
+                    {member.contributions.filter(c => c.status === 'completed').length} contributions
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Total: ${member.contributionsMade * system.amount}
+                    Total: ${member.contributions
+                      .filter(c => c.status === 'completed')
+                      .reduce((sum, c) => sum + c.amount, 0)}
                   </p>
                 </div>
               </div>

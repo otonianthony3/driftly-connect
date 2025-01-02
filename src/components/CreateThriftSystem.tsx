@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -29,6 +31,7 @@ interface CreateThriftSystemProps {
 }
 
 const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
+  const navigate = useNavigate();
   console.log("CreateThriftSystem rendered");
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -45,9 +48,29 @@ const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log("Form submitted:", values);
     try {
-      // Here we would typically make an API call to create the thrift system
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      const { data, error } = await supabase
+        .from('thrift_systems')
+        .insert([
+          {
+            name: values.name,
+            contribution_amount: Number(values.contributionAmount),
+            payout_schedule: values.payoutSchedule,
+            max_members: Number(values.maxMembers),
+            description: values.description || null,
+            admin_id: userData.user.id,
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
       toast.success("Thrift system created successfully!");
       onClose();
+      navigate(`/thrift-system/${data.id}`);
     } catch (error) {
       console.error("Error creating thrift system:", error);
       toast.error("Failed to create thrift system. Please try again.");
