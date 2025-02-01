@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import AccountManagement from "@/components/AccountManagement";
 
 const ProfileManagement = () => {
-  const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
@@ -55,7 +54,7 @@ const ProfileManagement = () => {
     onSuccess: () => {
       toast.success("Profile updated successfully");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message);
     },
   });
@@ -104,7 +103,7 @@ const ProfileManagement = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 space-y-8">
       <Card>
         <CardHeader>
           <CardTitle>Profile Management</CardTitle>
@@ -150,6 +149,8 @@ const ProfileManagement = () => {
           </form>
         </CardContent>
       </Card>
+
+      <AccountManagement />
     </div>
   );
 };

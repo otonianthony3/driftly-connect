@@ -1,16 +1,27 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface MemberManagementProps {
   thriftSystemId: string;
 }
 
 const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
+  const queryClient = useQueryClient();
+
   const { data: members, isLoading } = useQuery({
     queryKey: ['members', thriftSystemId],
     queryFn: async () => {
@@ -21,7 +32,8 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
           *,
           profiles (
             full_name,
-            avatar_url
+            avatar_url,
+            role
           )
         `)
         .eq('thrift_system_id', thriftSystemId);
@@ -31,29 +43,45 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
     },
   });
 
-  const handleMemberAction = async (memberId: string, action: 'approve' | 'remove') => {
-    try {
+  const memberActionMutation = useMutation({
+    mutationFn: async ({ memberId, action, role }: { memberId: string; action: 'approve' | 'remove' | 'promote' | 'demote'; role?: string }) => {
+      console.log(`Performing ${action} action on member:`, memberId);
+      
       if (action === 'approve') {
         const { error } = await supabase
           .from('memberships')
-          .update({ status: 'active' })
+          .update({ 
+            status: 'active',
+            join_date: new Date().toISOString()
+          })
           .eq('id', memberId);
-
         if (error) throw error;
-        toast.success("Member approved successfully");
-      } else {
+      } else if (action === 'remove') {
         const { error } = await supabase
           .from('memberships')
           .delete()
           .eq('id', memberId);
-
         if (error) throw error;
-        toast.success("Member removed successfully");
+      } else if (action === 'promote' || action === 'demote') {
+        const { error } = await supabase
+          .from('memberships')
+          .update({ role })
+          .eq('id', memberId);
+        if (error) throw error;
       }
-    } catch (error) {
-      console.error(`Error ${action}ing member:`, error);
-      toast.error(`Failed to ${action} member`);
-    }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['members', thriftSystemId] });
+      toast.success(`Member ${variables.action}d successfully`);
+    },
+    onError: (error) => {
+      console.error('Error performing member action:', error);
+      toast.error('Failed to perform action on member');
+    },
+  });
+
+  const handleMemberAction = (memberId: string, action: 'approve' | 'remove' | 'promote' | 'demote', role?: string) => {
+    memberActionMutation.mutate({ memberId, action, role });
   };
 
   if (isLoading) {
@@ -78,6 +106,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
             <TableRow>
               <TableHead>Member</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Role</TableHead>
               <TableHead>Join Date</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -87,20 +116,22 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
               <TableRow key={member.id}>
                 <TableCell>{member.profiles.full_name}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    member.status === 'active' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <Badge variant={member.status === 'active' ? 'success' : 'warning'}>
                     {member.status}
-                  </span>
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    {member.role || 'member'}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   {member.join_date 
                     ? new Date(member.join_date).toLocaleDateString()
                     : 'Pending'}
                 </TableCell>
-                <TableCell>
+                <TableCell className="space-x-2">
                   {member.status === 'pending' ? (
                     <Button 
                       size="sm"
@@ -109,13 +140,52 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
                       Approve
                     </Button>
                   ) : (
-                    <Button 
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleMemberAction(member.id, 'remove')}
-                    >
-                      Remove
-                    </Button>
+                    <>
+                      {member.role !== 'admin' && (
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleMemberAction(member.id, 'promote', 'admin')}
+                        >
+                          Promote
+                        </Button>
+                      )}
+                      {member.role === 'admin' && (
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleMemberAction(member.id, 'demote', 'member')}
+                        >
+                          Demote
+                        </Button>
+                      )}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            size="sm"
+                            variant="destructive"
+                          >
+                            Remove
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Remove Member</DialogTitle>
+                            <DialogDescription>
+                              Are you sure you want to remove this member? This action cannot be undone.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleMemberAction(member.id, 'remove')}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </>
                   )}
                 </TableCell>
               </TableRow>
