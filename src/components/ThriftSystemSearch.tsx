@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 interface ThriftSystem {
   id: string;
@@ -123,13 +124,9 @@ const ThriftSystemSearch = () => {
                   <TableRow key={system.id}>
                     <TableCell>{system.name}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        system.status === 'active' 
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <Badge variant={system.status === 'active' ? 'default' : 'secondary'}>
                         {system.status}
-                      </span>
+                      </Badge>
                     </TableCell>
                     <TableCell>${system.contribution_amount}</TableCell>
                     <TableCell>{system.payout_schedule}</TableCell>

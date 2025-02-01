@@ -116,7 +116,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
               <TableRow key={member.id}>
                 <TableCell>{member.profiles.full_name}</TableCell>
                 <TableCell>
-                  <Badge variant={member.status === 'active' ? 'success' : 'warning'}>
+                  <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
                     {member.status}
                   </Badge>
                 </TableCell>

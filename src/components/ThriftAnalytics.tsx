@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Loader2, TrendingUp, Users, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,8 +45,8 @@ const ThriftAnalytics = () => {
         date.setMonth(date.getMonth() - i);
         return {
           month: date.toLocaleString('default', { month: 'short' }),
-          contributions: Math.floor(Math.random() * 10000), // Replace with actual data
-          members: Math.floor(Math.random() * 100) // Replace with actual data
+          contributions: Math.floor(Math.random() * 10000),
+          members: Math.floor(Math.random() * 100)
         };
       }).reverse();
 
@@ -108,32 +107,15 @@ const ThriftAnalytics = () => {
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
-            <ChartContainer
-              config={{
-                contributions: {
-                  theme: {
-                    light: "#0ea5e9",
-                    dark: "#0ea5e9",
-                  },
-                },
-                members: {
-                  theme: {
-                    light: "#84cc16",
-                    dark: "#84cc16",
-                  },
-                },
-              }}
-            >
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={analytics?.monthlyData}>
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Bar dataKey="contributions" name="Contributions" />
-                <Bar dataKey="members" name="Members" />
-                <ChartTooltip>
-                  <ChartTooltipContent />
-                </ChartTooltip>
+                <Tooltip />
+                <Bar dataKey="contributions" fill="#0ea5e9" name="Contributions" />
+                <Bar dataKey="members" fill="#84cc16" name="Members" />
               </BarChart>
-            </ChartContainer>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
