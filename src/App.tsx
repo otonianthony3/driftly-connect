@@ -11,6 +11,9 @@ import ClientDashboard from "./pages/ClientDashboard";
 import ThriftSystemDetails from "./pages/ThriftSystemDetails";
 import PayoutHistory from "./pages/PayoutHistory";
 import PayoutManagement from "./pages/PayoutManagement";
+import ProfileManagement from "./pages/ProfileManagement";
+import PasswordReset from "./pages/PasswordReset";
+import UpdatePassword from "./pages/UpdatePassword";
 import { NotificationBell } from "./components/NotificationBell";
 
 const queryClient = new QueryClient();
@@ -34,6 +37,9 @@ const App = () => (
             <Route path="/thrift-system/:id" element={<ThriftSystemDetails />} />
             <Route path="/payouts/history" element={<PayoutHistory />} />
             <Route path="/admin/payouts" element={<PayoutManagement />} />
+            <Route path="/profile" element={<ProfileManagement />} />
+            <Route path="/reset-password" element={<PasswordReset />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
           </Routes>
         </BrowserRouter>
       </div>
