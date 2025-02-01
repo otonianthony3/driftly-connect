@@ -28,9 +28,16 @@ const Register = () => {
       return;
     }
 
+    if (!email || !password || !role) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      console.log("Attempting registration with:", { email, role }); // Debug log
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -41,6 +48,8 @@ const Register = () => {
         },
       });
 
+      console.log("Registration response:", { data, error }); // Debug log
+
       if (error) throw error;
 
       if (data.user) {
@@ -48,6 +57,7 @@ const Register = () => {
         navigate("/login");
       }
     } catch (error: any) {
+      console.error("Registration error:", error); // Debug log
       toast.error(error.message || 'An error occurred during registration');
     } finally {
       setLoading(false);
