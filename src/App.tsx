@@ -19,12 +19,12 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <div className="min-h-screen">
-        <div className="fixed top-4 right-4 z-50">
-          <NotificationBell />
-        </div>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <div className="fixed top-4 right-4 z-50">
+            <NotificationBell />
+          </div>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
