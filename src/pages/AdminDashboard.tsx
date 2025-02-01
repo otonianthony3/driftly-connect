@@ -6,6 +6,8 @@ import CreateThriftSystem from "@/components/CreateThriftSystem";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import ThriftAnalytics from "@/components/ThriftAnalytics";
+import ThriftSystemSearch from "@/components/ThriftSystemSearch";
 
 interface ThriftSystemSummary {
   id: string;
@@ -50,39 +52,45 @@ const AdminDashboard = () => {
     <div className="p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setShowCreateThrift(true)}>
-          <CardContent className="flex items-center p-6">
-            <Plus className="h-6 w-6 mr-4" />
-            <div>
-              <h3 className="font-semibold">Create Thrift System</h3>
-              <p className="text-sm text-muted-foreground">Set up a new thrift group</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {thriftSystems?.map((system) => (
-          <Card 
-            key={system.id}
-            className="hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => navigate(`/thrift-system/${system.id}`)}
-          >
+      <div className="grid gap-6">
+        <ThriftAnalytics />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setShowCreateThrift(true)}>
             <CardContent className="flex items-center p-6">
-              <Users className="h-6 w-6 mr-4" />
+              <Plus className="h-6 w-6 mr-4" />
               <div>
-                <h3 className="font-semibold">{system.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {system.total_members} members
-                  {system.pending_requests > 0 && (
-                    <span className="text-red-500 ml-2">
-                      ({system.pending_requests} pending)
-                    </span>
-                  )}
-                </p>
+                <h3 className="font-semibold">Create Thrift System</h3>
+                <p className="text-sm text-muted-foreground">Set up a new thrift group</p>
               </div>
             </CardContent>
           </Card>
-        ))}
+
+          {thriftSystems?.map((system) => (
+            <Card 
+              key={system.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(`/thrift-system/${system.id}`)}
+            >
+              <CardContent className="flex items-center p-6">
+                <Users className="h-6 w-6 mr-4" />
+                <div>
+                  <h3 className="font-semibold">{system.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {system.total_members} members
+                    {system.pending_requests > 0 && (
+                      <span className="text-red-500 ml-2">
+                        ({system.pending_requests} pending)
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <ThriftSystemSearch />
       </div>
 
       {showCreateThrift && (
