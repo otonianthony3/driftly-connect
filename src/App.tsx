@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -18,6 +18,22 @@ import { NotificationBell } from "./components/NotificationBell";
 
 const queryClient = new QueryClient();
 
+// Helper component to conditionally render NotificationBell
+const ConditionalNotificationBell = () => {
+  const location = useLocation();
+  const publicRoutes = ['/', '/login', '/register', '/reset-password', '/update-password'];
+  
+  if (publicRoutes.includes(location.pathname)) {
+    return null;
+  }
+
+  return (
+    <div className="fixed top-4 right-4 z-50">
+      <NotificationBell />
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -25,9 +41,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="fixed top-4 right-4 z-50">
-            <NotificationBell />
-          </div>
+          <ConditionalNotificationBell />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
