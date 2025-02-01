@@ -53,16 +53,15 @@ const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
 
       const { data, error } = await supabase
         .from('thrift_systems')
-        .insert([
-          {
-            name: values.name,
-            contribution_amount: Number(values.contributionAmount),
-            payout_schedule: values.payoutSchedule,
-            max_members: Number(values.maxMembers),
-            description: values.description || null,
-            admin_id: userData.user.id,
-          }
-        ])
+        .insert({
+          name: values.name,
+          contribution_amount: Number(values.contributionAmount),
+          payout_schedule: values.payoutSchedule,
+          max_members: Number(values.maxMembers),
+          description: values.description || null,
+          admin_id: userData.user.id,
+          status: 'active' // Add the required status field
+        })
         .select()
         .single();
 

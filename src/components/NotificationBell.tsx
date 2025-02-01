@@ -20,13 +20,25 @@ interface Notification {
 
 const fetchNotifications = async (): Promise<Notification[]> => {
   console.log("Fetching notifications...");
+  const { data: session } = await supabase.auth.getSession();
+  
+  if (!session?.session?.user) {
+    console.log("No authenticated user found");
+    return [];
+  }
+
   const { data: notifications, error } = await supabase
     .from('notifications')
     .select('*')
+    .eq('user_id', session.session.user.id)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
-  return notifications;
+  if (error) {
+    console.error("Error fetching notifications:", error);
+    throw error;
+  }
+  
+  return notifications || [];
 };
 
 export function NotificationBell() {
@@ -40,15 +52,17 @@ export function NotificationBell() {
 
   const handleNotificationClick = async (notification: Notification) => {
     try {
-      // Mark notification as read
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('id', notification.id);
+        .eq('id', notification.id)
+        .eq('user_id', session.session.user.id);
 
       if (error) throw error;
 
-      // Navigate based on notification type
       if (notification.type === 'payout_scheduled') {
         navigate('/payouts/history');
       }
