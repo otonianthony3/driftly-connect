@@ -95,7 +95,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "memberships"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       departments: {
@@ -184,7 +184,7 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       group_members: {
@@ -216,7 +216,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       group_rewards: {
@@ -266,7 +266,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       groups: {
@@ -301,7 +301,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       memberships: {
@@ -343,7 +343,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       messages: {
@@ -401,7 +401,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       notification_templates: {
@@ -466,7 +466,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       payouts: {
@@ -517,7 +517,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "thrift_systems"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       profiles: {
@@ -611,7 +611,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "rides"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       rides: {
@@ -683,7 +683,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       spatial_ref_sys: {
@@ -754,7 +754,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       user_achievements: {
@@ -783,7 +783,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "achievements"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       verification_logs: {
@@ -825,7 +825,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
     }
@@ -2776,6 +2776,7 @@ export type Database = {
           "": unknown
         }
         Returns: unknown
+      
       }
       st_forcerhr: {
         Args: {
@@ -4044,3 +4045,30 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export type Membership = {
+  id: string;
+  join_date: string;
+  status: string;
+  thrift_system_id: string;
+  user_id: string;
+  role: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string;
+    role: string;
+  };
+};
+
+export type ThriftSystem = {
+  id: string;
+  name: string;
+  contribution_amount: number;
+  payout_schedule: string;
+  max_members: number;
+  description: string | null;
+  admin_id: string;
+  created_at: string;
+  updated_at: string;
+  status: string;
+};
