@@ -36,34 +36,34 @@ const PayoutHistory = () => {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Payout History</h1>
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">Payout History</h1>
 
-      <div className="grid gap-6 mb-8">
+      <div className="grid gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <DollarSign className="h-5 w-5" />
               Your Payouts
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Thrift System</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Scheduled Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Completed Date</TableHead>
+                  <TableHead className="whitespace-nowrap">Thrift System</TableHead>
+                  <TableHead className="whitespace-nowrap">Amount</TableHead>
+                  <TableHead className="whitespace-nowrap">Scheduled Date</TableHead>
+                  <TableHead className="whitespace-nowrap">Status</TableHead>
+                  <TableHead className="whitespace-nowrap">Completed Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {payouts?.map((payout) => (
                   <TableRow key={payout.id}>
-                    <TableCell>{payout.thrift_systems.name}</TableCell>
+                    <TableCell className="font-medium">{payout.thrift_systems.name}</TableCell>
                     <TableCell>${payout.amount}</TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       {new Date(payout.scheduled_date).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
@@ -75,16 +75,16 @@ const PayoutHistory = () => {
                         {payout.status}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       {payout.completed_date 
                         ? new Date(payout.completed_date).toLocaleDateString()
                         : '-'}
                     </TableCell>
                   </TableRow>
                 ))}
-                {payouts?.length === 0 && (
+                {(!payouts || payouts.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       No payouts found
                     </TableCell>
                   </TableRow>
