@@ -48,7 +48,8 @@ const ClientDashboard = () => {
           {
             thrift_system_id: systemId,
             user_id: userData.user.id,
-            status: 'pending'
+            status: 'pending',
+            role: 'member' // Added the required role field
           }
         ]);
 
