@@ -1,57 +1,64 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    
+    setIsLoading(true);
+
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
-
-      if (data.user) {
-        // Get user role
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-
-        // Redirect based on role
-        if (profile?.role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/client/dashboard');
-        }
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
       }
-    } catch (error: any) {
-      toast.error(error.message || 'An error occurred during login');
+
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      });
+      navigate("/client/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/10 to-primary/5">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground">Login to your account</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-primary/5 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome back</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Enter your credentials to access your account
+          </p>
         </div>
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
             <Input
@@ -59,6 +66,7 @@ const Login = () => {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="h-11 sm:h-10 text-base sm:text-sm"
               required
             />
           </div>
@@ -68,21 +76,38 @@ const Login = () => {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="h-11 sm:h-10 text-base sm:text-sm"
               required
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          <Button
+            type="submit"
+            className="w-full h-11 sm:h-10 text-base sm:text-sm"
+            size={isMobile ? "lg" : "default"}
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
-        <div className="text-center">
+
+        <div className="space-y-4 text-center">
           <Button
             variant="link"
-            onClick={() => navigate("/register")}
-            className="text-sm"
+            className="text-sm sm:text-base"
+            onClick={() => navigate("/reset-password")}
           >
-            Don't have an account? Register
+            Forgot password?
           </Button>
+          <div className="text-sm sm:text-base">
+            Don't have an account?{" "}
+            <Button
+              variant="link"
+              className="text-sm sm:text-base"
+              onClick={() => navigate("/register")}
+            >
+              Sign up
+            </Button>
+          </div>
         </div>
       </div>
     </div>

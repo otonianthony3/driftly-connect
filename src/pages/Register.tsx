@@ -1,83 +1,88 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Register = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    if (!email || !password || !role) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setLoading(true);
+    setIsLoading(true);
 
     try {
-      console.log("Attempting registration with:", { email, role }); // Debug log
-      
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            role: role,
+            full_name: fullName,
           },
         },
       });
 
-      console.log("Registration response:", { data, error }); // Debug log
-
-      if (error) throw error;
-
-      if (data.user) {
-        toast.success("Registration successful! Please check your email to verify your account.");
-        navigate("/login");
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
       }
-    } catch (error: any) {
-      console.error("Registration error:", error); // Debug log
-      toast.error(error.message || 'An error occurred during registration');
+
+      toast({
+        title: "Success",
+        description: "Registration successful. Please check your email to verify your account.",
+      });
+      navigate("/login");
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/10 to-primary/5">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">Create Account</h1>
-          <p className="text-muted-foreground">Register for a new account</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-primary/5 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Create an account</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Enter your details to get started
+          </p>
         </div>
+
         <form onSubmit={handleRegister} className="space-y-4">
+          <div className="space-y-2">
+            <Input
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="h-11 sm:h-10 text-base sm:text-sm"
+              required
+            />
+          </div>
           <div className="space-y-2">
             <Input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="h-11 sm:h-10 text-base sm:text-sm"
               required
             />
           </div>
@@ -87,38 +92,28 @@ const Register = () => {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="h-11 sm:h-10 text-base sm:text-sm"
               required
             />
           </div>
-          <div className="space-y-2">
-            <Input
-              type="password"
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Select onValueChange={setRole} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="client">Client</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Register"}
+          <Button
+            type="submit"
+            className="w-full h-11 sm:h-10 text-base sm:text-sm"
+            size={isMobile ? "lg" : "default"}
+            disabled={isLoading}
+          >
+            {isLoading ? "Creating account..." : "Create account"}
           </Button>
         </form>
-        <div className="text-center">
+
+        <div className="text-center text-sm sm:text-base">
+          Already have an account?{" "}
           <Button
             variant="link"
+            className="text-sm sm:text-base"
             onClick={() => navigate("/login")}
-            className="text-sm"
           >
-            Already have an account? Login
+            Sign in
           </Button>
         </div>
       </div>
