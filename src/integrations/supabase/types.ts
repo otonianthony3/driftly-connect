@@ -6,6 +6,42 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export interface Profile {
+  id: string;
+  username?: string;
+  full_name?: string;
+  avatar_url?: string;
+  role?: string;
+  created_at?: string;
+  updated_at?: string;
+  notification_preferences?: Json;
+  average_rating?: number;
+  status: string;
+}
+
+export interface Membership {
+  id: string;
+  thrift_system_id?: string;
+  user_id?: string;
+  status?: string;
+  join_date?: string;
+  role: string;
+  profiles?: Profile;
+}
+
+export interface ThriftSystem {
+  id: string;
+  name: string;
+  contribution_amount: number;
+  payout_schedule: string;
+  max_members: number;
+  description?: string;
+  admin_id: string;
+  created_at?: string;
+  updated_at?: string;
+  status: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -311,6 +347,7 @@ export type Database = {
           status: string
           thrift_system_id: string | null
           user_id: string | null
+          role: string
         }
         Insert: {
           id?: string
@@ -318,6 +355,7 @@ export type Database = {
           status: string
           thrift_system_id?: string | null
           user_id?: string | null
+          role: string
         }
         Update: {
           id?: string
@@ -325,6 +363,7 @@ export type Database = {
           status?: string
           thrift_system_id?: string | null
           user_id?: string | null
+          role?: string
         }
         Relationships: [
           {
@@ -528,6 +567,7 @@ export type Database = {
           role: string
           updated_at: string | null
           username: string | null
+          status: string
         }
         Insert: {
           avatar_url?: string | null
@@ -539,6 +579,7 @@ export type Database = {
           role?: string
           updated_at?: string | null
           username?: string | null
+          status: string
         }
         Update: {
           avatar_url?: string | null
@@ -550,6 +591,7 @@ export type Database = {
           role?: string
           updated_at?: string | null
           username?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -715,6 +757,7 @@ export type Database = {
           name: string
           payout_schedule: string
           updated_at: string | null
+          status: string
         }
         Insert: {
           admin_id: string
@@ -726,6 +769,7 @@ export type Database = {
           name: string
           payout_schedule: string
           updated_at?: string | null
+          status: string
         }
         Update: {
           admin_id?: string
@@ -737,6 +781,7 @@ export type Database = {
           name?: string
           payout_schedule?: string
           updated_at?: string | null
+          status?: string
         }
         Relationships: [
           {
@@ -1200,6 +1245,7 @@ export type Database = {
         Returns: {
           created_at: string | null
           id: string
+          
           message: string
           read: boolean | null
           type: string

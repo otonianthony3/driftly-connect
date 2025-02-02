@@ -29,7 +29,6 @@ const AccountManagement = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // First, update the profile status
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ status: 'deactivated' })
@@ -37,7 +36,6 @@ const AccountManagement = () => {
 
       if (profileError) throw profileError;
 
-      // Then, sign out the user
       const { error: signOutError } = await supabase.auth.signOut();
       if (signOutError) throw signOutError;
 

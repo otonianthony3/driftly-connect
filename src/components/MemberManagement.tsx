@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Membership } from "@/integrations/supabase/types";
 
 interface MemberManagementProps {
   thriftSystemId: string;
@@ -39,7 +40,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
         .eq('thrift_system_id', thriftSystemId);
 
       if (error) throw error;
-      return data;
+      return data as Membership[];
     },
   });
 
@@ -114,7 +115,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
           <TableBody>
             {members?.map((member) => (
               <TableRow key={member.id}>
-                <TableCell>{member.profiles.full_name}</TableCell>
+                <TableCell>{member.profiles?.full_name}</TableCell>
                 <TableCell>
                   <Badge variant={member.status === 'active' ? 'default' : 'secondary'}>
                     {member.status}

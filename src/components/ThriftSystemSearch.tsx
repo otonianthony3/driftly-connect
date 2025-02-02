@@ -8,15 +8,7 @@ import { Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-
-interface ThriftSystem {
-  id: string;
-  name: string;
-  status: string;
-  contribution_amount: number;
-  payout_schedule: string;
-  created_at: string;
-}
+import { ThriftSystem } from "@/integrations/supabase/types";
 
 const ThriftSystemSearch = () => {
   const navigate = useNavigate();
@@ -53,7 +45,7 @@ const ThriftSystemSearch = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as ThriftSystem[];
     },
   });
 
@@ -130,7 +122,7 @@ const ThriftSystemSearch = () => {
                     </TableCell>
                     <TableCell>${system.contribution_amount}</TableCell>
                     <TableCell>{system.payout_schedule}</TableCell>
-                    <TableCell>{new Date(system.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(system.created_at || '').toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Button
                         size="sm"
