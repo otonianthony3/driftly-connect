@@ -1,20 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, Bell, List } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import CreateThriftSystem from "@/components/CreateThriftSystem";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import ThriftAnalytics from "@/components/ThriftAnalytics";
 import ThriftSystemSearch from "@/components/ThriftSystemSearch";
-
-interface ThriftSystemSummary {
-  id: string;
-  name: string;
-  total_members: number;
-  pending_requests: number;
-}
+import { ThriftSystem } from "@/integrations/supabase/types";
 
 const AdminDashboard = () => {
   const [showCreateThrift, setShowCreateThrift] = useState(false);
@@ -49,56 +43,64 @@ const AdminDashboard = () => {
   });
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
-      
-      <div className="grid gap-6">
-        <ThriftAnalytics />
+    <div className="min-h-screen bg-background">
+      <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Manage your thrift systems</p>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setShowCreateThrift(true)}>
-            <CardContent className="flex items-center p-6">
-              <Plus className="h-6 w-6 mr-4" />
-              <div>
-                <h3 className="font-semibold">Create Thrift System</h3>
-                <p className="text-sm text-muted-foreground">Set up a new thrift group</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {thriftSystems?.map((system) => (
+        <div className="grid gap-6">
+          <ThriftAnalytics />
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card 
-              key={system.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(`/thrift-system/${system.id}`)}
+              className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" 
+              onClick={() => setShowCreateThrift(true)}
             >
               <CardContent className="flex items-center p-6">
-                <Users className="h-6 w-6 mr-4" />
+                <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-4" />
                 <div>
-                  <h3 className="font-semibold">{system.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {system.total_members} members
-                    {system.pending_requests > 0 && (
-                      <span className="text-red-500 ml-2">
-                        ({system.pending_requests} pending)
-                      </span>
-                    )}
-                  </p>
+                  <h3 className="font-semibold">Create Thrift System</h3>
+                  <p className="text-sm text-muted-foreground">Set up a new thrift group</p>
                 </div>
               </CardContent>
             </Card>
-          ))}
+
+            {thriftSystems?.map((system) => (
+              <Card 
+                key={system.id}
+                className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation"
+                onClick={() => navigate(`/thrift-system/${system.id}`)}
+              >
+                <CardContent className="flex items-center p-6">
+                  <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-4" />
+                  <div>
+                    <h3 className="font-semibold line-clamp-1">{system.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {system.total_members} members
+                      {system.pending_requests > 0 && (
+                        <span className="text-red-500 ml-2">
+                          ({system.pending_requests} pending)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <ThriftSystemSearch />
         </div>
 
-        <ThriftSystemSearch />
+        {showCreateThrift && (
+          <CreateThriftSystem 
+            open={showCreateThrift} 
+            onClose={() => setShowCreateThrift(false)} 
+          />
+        )}
       </div>
-
-      {showCreateThrift && (
-        <CreateThriftSystem 
-          open={showCreateThrift} 
-          onClose={() => setShowCreateThrift(false)} 
-        />
-      )}
     </div>
   );
 };
