@@ -2776,7 +2776,6 @@ export type Database = {
           "": unknown
         }
         Returns: unknown
-      
       }
       st_forcerhr: {
         Args: {
@@ -4045,31 +4044,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export type ThriftSystem = {
-  id: string;
-  name: string;
-  contribution_amount: number;
-  payout_schedule: string;
-  max_members: number;
-  description: string | null;
-  admin_id: string;
-  created_at: string | null;
-  updated_at: string | null;
-  status: string;
-  memberships?: Membership[];
-};
-
-export type Membership = {
-  id: string;
-  thrift_system_id: string | null;
-  user_id: string | null;
-  status: string;
-  join_date: string | null;
-  role: string;
-  profiles?: {
-    full_name: string | null;
-    avatar_url: string | null;
-    role: string;
-  };
-};
