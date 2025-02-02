@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -81,25 +83,28 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-primary/5">
-      <div className="text-center space-y-8 p-8">
-        <h1 className="text-4xl font-bold tracking-tight">Welcome to Driftly</h1>
-        <p className="text-lg text-muted-foreground max-w-md mx-auto">
-          Join our community-driven thrift system and start saving together.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-primary/5 px-4 sm:px-6 lg:px-8">
+      <div className="text-center space-y-6 sm:space-y-8 max-w-md w-full">
+        <div className="space-y-2 sm:space-y-4">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Welcome to Driftly</h1>
+          <p className="text-base sm:text-lg text-muted-foreground max-w-sm mx-auto">
+            Join our community-driven thrift system and start saving together.
+          </p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           <Button
-            size="lg"
+            size={isMobile ? "lg" : "default"}
+            className="w-full sm:w-auto min-w-[150px] text-base sm:text-sm"
             onClick={() => navigate("/login")}
-            className="min-w-[150px]"
           >
             Login
           </Button>
           <Button
-            size="lg"
+            size={isMobile ? "lg" : "default"}
             variant="outline"
+            className="w-full sm:w-auto min-w-[150px] text-base sm:text-sm"
             onClick={() => navigate("/register")}
-            className="min-w-[150px]"
           >
             Register
           </Button>
