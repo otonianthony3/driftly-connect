@@ -12,7 +12,6 @@ import AccountManagement from "@/components/AccountManagement";
 const ProfileManagement = () => {
   const [uploading, setUploading] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
 
   // Fetch user profile data
   const { data: profile, isLoading } = useQuery({
@@ -29,14 +28,13 @@ const ProfileManagement = () => {
         
       if (error) throw error;
       setFullName(data.full_name || "");
-      setUsername(data.username || "");
       return data;
     },
   });
 
   // Update profile mutation
   const updateProfile = useMutation({
-    mutationFn: async (formData: { full_name: string; username: string }) => {
+    mutationFn: async (formData: { full_name: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -44,7 +42,6 @@ const ProfileManagement = () => {
         .from("profiles")
         .update({
           full_name: formData.full_name,
-          username: formData.username,
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
@@ -95,7 +92,7 @@ const ProfileManagement = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile.mutate({ full_name: fullName, username });
+    updateProfile.mutate({ full_name: fullName });
   };
 
   if (isLoading) {
@@ -131,15 +128,6 @@ const ProfileManagement = () => {
                 id="fullName"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
 

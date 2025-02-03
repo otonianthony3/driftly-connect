@@ -50,10 +50,16 @@ const ThriftSystemDetails = () => {
     },
     enabled: !!id,
     retry: 1,
-    onError: (error) => {
-      console.error("Error in thrift system query:", error);
-      toast.error("Failed to load thrift system details");
-      navigate('/client/dashboard');
+    meta: {
+      errorMessage: "Failed to load thrift system details"
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    onSettled: (data, error) => {
+      if (error) {
+        console.error("Error in thrift system query:", error);
+        toast.error("Failed to load thrift system details");
+        navigate('/client/dashboard');
+      }
     }
   });
 
