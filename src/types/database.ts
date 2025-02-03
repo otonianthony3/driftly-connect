@@ -9,6 +9,7 @@ export interface ThriftSystem {
   created_at: string | null;
   updated_at: string | null;
   status: string;
+  memberships?: Membership[]; // Added this property
 }
 
 export interface Membership {
@@ -18,4 +19,9 @@ export interface Membership {
   status: string;
   join_date: string | null;
   role: string;
+  profiles?: {  // Added this property
+    full_name: string | null;
+    avatar_url: string | null;
+    role: string;
+  };
 }
