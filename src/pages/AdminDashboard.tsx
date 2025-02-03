@@ -15,10 +15,22 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   console.log("Admin Dashboard rendered");
 
-  const { data: thriftSystems } = useQuery({
+  const { data: thriftSystems, isLoading } = useQuery({
     queryKey: ['adminThriftSystems'],
     queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
+      // First get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        throw userError;
+      }
+      
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
+      console.log("Fetching thrift systems for admin:", user.id);
+      
       const { data, error } = await supabase
         .from('thrift_systems')
         .select(`
@@ -29,7 +41,7 @@ const AdminDashboard = () => {
             status
           )
         `)
-        .eq('admin_id', userData.user?.id);
+        .eq('admin_id', user.id);
 
       if (error) throw error;
 
@@ -39,7 +51,9 @@ const AdminDashboard = () => {
         total_members: system.memberships.filter(m => m.status === 'active').length,
         pending_requests: system.memberships.filter(m => m.status === 'pending').length
       }));
-    }
+    },
+    retry: false,
+    enabled: true
   });
 
   return (
