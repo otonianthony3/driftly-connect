@@ -1,3 +1,25 @@
+export interface ThriftSystem {
+  id: string;
+  name: string;
+  contribution_amount: number;
+  payout_schedule: string;
+  max_members: number;
+  description?: string;
+  admin_id: string;
+  created_at?: string;
+  updated_at?: string;
+  status: 'active' | 'inactive';
+}
+
+export interface Membership {
+  id: string;
+  thrift_system_id: string;
+  user_id: string;
+  status: string;
+  join_date?: string;
+  role: 'member' | 'admin';
+}
+
 export type Json =
   | string
   | number
@@ -4044,3 +4066,4 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+

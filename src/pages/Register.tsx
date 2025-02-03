@@ -19,6 +19,23 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      // First check if user already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        toast({
+          title: "Error",
+          description: "An account with this email already exists",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -26,10 +43,12 @@ const Register = () => {
           data: {
             full_name: fullName,
           },
-        },
+          emailRedirectTo: window.location.origin + '/login'
+        }
       });
 
       if (error) {
+        console.error("Registration error:", error);
         toast({
           title: "Error",
           description: error.message,
