@@ -19,23 +19,6 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // First check if user already exists
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (existingUser) {
-        toast({
-          title: "Account Already Exists",
-          description: "An account with this email already exists. Please login instead.",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
