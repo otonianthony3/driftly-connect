@@ -48,7 +48,7 @@ const ThriftSystemDetails = () => {
 
       return data;
     },
-    enabled: !!id,
+    enabled: Boolean(id), // Only run query when id is available
     retry: 1,
     meta: {
       errorMessage: "Failed to load thrift system details"
@@ -56,6 +56,7 @@ const ThriftSystemDetails = () => {
     staleTime: 1000 * 60 * 5 // 5 minutes
   });
 
+  // Handle invalid ID case
   if (!id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -67,6 +68,7 @@ const ThriftSystemDetails = () => {
     );
   }
 
+  // Handle loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -75,7 +77,14 @@ const ThriftSystemDetails = () => {
     );
   }
 
-  if (error || !system) {
+  // Handle error state
+  if (error) {
+    toast.error("Failed to load thrift system details");
+    navigate('/client/dashboard');
+    return null;
+  }
+
+  if (!system) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
