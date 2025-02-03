@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import ThriftAnalytics from "@/components/ThriftAnalytics";
 import ThriftSystemSearch from "@/components/ThriftSystemSearch";
-import { ThriftSystem } from "@/integrations/supabase/types";
+import { ThriftSystem } from "@/types/database";
 
 const AdminDashboard = () => {
   const [showCreateThrift, setShowCreateThrift] = useState(false);

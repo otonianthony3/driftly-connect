@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ThriftSystem } from "@/integrations/supabase/types";
+import { ThriftSystem } from "@/types/database";
 
 const ClientDashboard = () => {
   const { toast } = useToast();

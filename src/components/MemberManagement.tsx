@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Membership } from "@/integrations/supabase/types";
+import { Membership } from "@/types/database";
 
 interface MemberManagementProps {
   thriftSystemId: string;

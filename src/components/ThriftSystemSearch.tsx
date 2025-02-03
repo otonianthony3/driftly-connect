@@ -8,7 +8,7 @@ import { Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { ThriftSystem } from "@/integrations/supabase/types";
+import { ThriftSystem } from "@/types/database";
 
 const ThriftSystemSearch = () => {
   const navigate = useNavigate();
