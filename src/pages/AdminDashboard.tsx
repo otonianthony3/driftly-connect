@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
@@ -9,16 +9,38 @@ import { useNavigate } from "react-router-dom";
 import ThriftAnalytics from "@/components/ThriftAnalytics";
 import ThriftSystemSearch from "@/components/ThriftSystemSearch";
 import { ThriftSystem } from "@/types/database";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
   const [showCreateThrift, setShowCreateThrift] = useState(false);
   const navigate = useNavigate();
-  console.log("Admin Dashboard rendered");
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  
+  // Check authentication on mount
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
-  const { data: thriftSystems, isLoading } = useQuery({
+  const checkAuth = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        toast.error("Please login to access this page");
+        navigate("/login");
+        return;
+      }
+      setIsAuthChecking(false);
+    } catch (error) {
+      console.error("Auth check error:", error);
+      toast.error("Authentication error");
+      navigate("/login");
+    }
+  };
+
+  const { data: thriftSystems, isLoading, error } = useQuery({
     queryKey: ['adminThriftSystems'],
     queryFn: async () => {
-      // First get the current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError) {
@@ -53,8 +75,20 @@ const AdminDashboard = () => {
       }));
     },
     retry: false,
-    enabled: true
+    enabled: !isAuthChecking,
+    onError: (error) => {
+      console.error("Error fetching thrift systems:", error);
+      toast.error("Failed to load thrift systems");
+    }
   });
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,28 +115,42 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            {thriftSystems?.map((system) => (
-              <Card 
-                key={system.id}
-                className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation"
-                onClick={() => navigate(`/thrift-system/${system.id}`)}
-              >
-                <CardContent className="flex items-center p-6">
-                  <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-4" />
-                  <div>
-                    <h3 className="font-semibold line-clamp-1">{system.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {system.total_members} members
-                      {system.pending_requests > 0 && (
-                        <span className="text-red-500 ml-2">
-                          ({system.pending_requests} pending)
-                        </span>
-                      )}
-                    </p>
-                  </div>
+            {isLoading ? (
+              <Card>
+                <CardContent className="flex items-center justify-center p-6">
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 </CardContent>
               </Card>
-            ))}
+            ) : error ? (
+              <Card>
+                <CardContent className="p-6 text-red-500">
+                  Failed to load thrift systems
+                </CardContent>
+              </Card>
+            ) : (
+              thriftSystems?.map((system) => (
+                <Card 
+                  key={system.id}
+                  className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation"
+                  onClick={() => navigate(`/thrift-system/${system.id}`)}
+                >
+                  <CardContent className="flex items-center p-6">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-4" />
+                    <div>
+                      <h3 className="font-semibold line-clamp-1">{system.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {system.total_members} members
+                        {system.pending_requests > 0 && (
+                          <span className="text-red-500 ml-2">
+                            ({system.pending_requests} pending)
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
 
           <ThriftSystemSearch />
