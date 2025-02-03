@@ -76,9 +76,8 @@ const AdminDashboard = () => {
     },
     retry: false,
     enabled: !isAuthChecking,
-    onError: (error) => {
-      console.error("Error fetching thrift systems:", error);
-      toast.error("Failed to load thrift systems");
+    meta: {
+      errorMessage: "Failed to load thrift systems"
     }
   });
 
