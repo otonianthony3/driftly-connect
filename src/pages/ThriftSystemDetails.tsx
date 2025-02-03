@@ -3,18 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Users, Calendar, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import ContributionTracker from "@/components/ContributionTracker";
 import MemberManagement from "@/components/MemberManagement";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 const ThriftSystemDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  const { data: system, isLoading } = useQuery({
+  const { data: system, isLoading, error } = useQuery({
     queryKey: ['thriftSystem', id],
     queryFn: async () => {
+      if (!id) throw new Error('No system ID provided');
+      
       console.log("Fetching thrift system details for:", id);
       const { data, error } = await supabase
         .from('thrift_systems')
@@ -33,13 +37,38 @@ const ThriftSystemDetails = () => {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching thrift system:", error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error('Thrift system not found');
+      }
+
       return data;
     },
     enabled: !!id,
+    retry: 1,
+    onError: (error) => {
+      console.error("Error in thrift system query:", error);
+      toast.error("Failed to load thrift system details");
+      navigate('/client/dashboard');
+    }
   });
 
-  if (isLoading || !system) {
+  if (!id) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800">Invalid System ID</h1>
+          <p className="text-gray-600 mt-2">Please select a valid thrift system.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -47,8 +76,19 @@ const ThriftSystemDetails = () => {
     );
   }
 
-  const activeMembers = system.memberships.filter(m => m.status === 'active');
-  const pendingMembers = system.memberships.filter(m => m.status === 'pending');
+  if (error || !system) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800">Error Loading System</h1>
+          <p className="text-gray-600 mt-2">Unable to load thrift system details.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const activeMembers = system.memberships?.filter(m => m.status === 'active') || [];
+  const pendingMembers = system.memberships?.filter(m => m.status === 'pending') || [];
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto">

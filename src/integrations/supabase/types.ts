@@ -177,15 +177,7 @@ export type Database = {
           vehicle_year?: number | null
           verification_status?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "driver_profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       group_members: {
         Row: {
@@ -382,24 +374,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "messages_receiver_id_fkey"
-            columns: ["receiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "messages_ride_id_fkey"
             columns: ["ride_id"]
             isOneToOne: false
             referencedRelation: "rides"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -531,7 +509,6 @@ export type Database = {
           role: string
           status: string
           updated_at: string | null
-          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -543,7 +520,6 @@ export type Database = {
           role?: string
           status?: string
           updated_at?: string | null
-          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -555,7 +531,6 @@ export type Database = {
           role?: string
           status?: string
           updated_at?: string | null
-          username?: string | null
         }
         Relationships: []
       }
@@ -591,20 +566,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "ratings_rated_id_fkey"
-            columns: ["rated_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ratings_rater_id_fkey"
-            columns: ["rater_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "ratings_ride_id_fkey"
             columns: ["ride_id"]
@@ -675,13 +636,6 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "driver_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "rides_passenger_id_fkey"
-            columns: ["passenger_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -817,13 +771,6 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "driver_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verification_logs_verified_by_fkey"
-            columns: ["verified_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
