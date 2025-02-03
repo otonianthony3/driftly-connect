@@ -19,6 +19,8 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      console.log("Starting registration process...");
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -30,25 +32,27 @@ const Register = () => {
       });
 
       if (error) {
-        console.error("Registration error:", error);
+        console.error("Registration error details:", error);
         toast({
-          title: "Error",
+          title: "Registration Failed",
           description: error.message,
           variant: "destructive",
         });
         return;
       }
 
+      console.log("Registration successful:", data);
+      
       toast({
         title: "Success",
         description: "Registration successful. Please check your email to verify your account.",
       });
       navigate("/login");
-    } catch (error) {
-      console.error("Registration error:", error);
+    } catch (error: any) {
+      console.error("Unexpected registration error:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: error?.message || "An unexpected error occurred during registration",
         variant: "destructive",
       });
     } finally {
