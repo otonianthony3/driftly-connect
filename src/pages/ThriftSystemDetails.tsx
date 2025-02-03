@@ -35,7 +35,7 @@ const ThriftSystemDetails = () => {
           )
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching thrift system:", error);
