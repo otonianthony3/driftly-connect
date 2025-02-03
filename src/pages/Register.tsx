@@ -19,20 +19,36 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      console.log("Starting registration process...");
-      
+      // First check if user already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingUser) {
+        toast({
+          title: "Account Already Exists",
+          description: "An account with this email already exists. Please login instead.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-          }
+          },
+          emailRedirectTo: window.location.origin
         }
       });
 
       if (error) {
-        console.error("Registration error details:", error);
+        console.error("Registration error:", error);
         toast({
           title: "Registration Failed",
           description: error.message,
@@ -41,18 +57,18 @@ const Register = () => {
         return;
       }
 
-      console.log("Registration successful:", data);
-      
-      toast({
-        title: "Success",
-        description: "Registration successful. Please check your email to verify your account.",
-      });
-      navigate("/login");
+      if (data?.user) {
+        toast({
+          title: "Success",
+          description: "Registration successful. Please check your email to verify your account.",
+        });
+        navigate("/login");
+      }
     } catch (error: any) {
       console.error("Unexpected registration error:", error);
       toast({
         title: "Error",
-        description: error?.message || "An unexpected error occurred during registration",
+        description: "An unexpected error occurred during registration. Please try again.",
         variant: "destructive",
       });
     } finally {
