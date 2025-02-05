@@ -3,6 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Loader2, TrendingUp, Users, DollarSign } from "lucide-react";
 import { useThriftAnalytics } from "@/hooks/use-thrift-analytics";
+import { supabase } from "@/integrations/supabase/client";
+
+interface AnalyticsSummary {
+  totalMembers: number;
+  totalContributions: number;
+  activeThriftSystems: number;
+}
+
+interface MonthlyData {
+  month: string;
+  contributions: number;
+  members: Set<string>;
+}
 
 const ThriftAnalytics = () => {
   const { data: analytics, isLoading } = useThriftAnalytics();
@@ -24,7 +37,7 @@ const ThriftAnalytics = () => {
       if (error) throw error;
 
       // Process monthly data
-      const monthlyStats = data.reduce((acc, curr) => {
+      const monthlyStats = data.reduce((acc: Record<string, MonthlyData>, curr) => {
         const month = new Date(curr.created_at).toLocaleString('default', { month: 'short' });
         if (!acc[month]) {
           acc[month] = { month, contributions: 0, members: new Set() };
@@ -48,11 +61,15 @@ const ThriftAnalytics = () => {
     );
   }
 
-  const totalStats = analytics?.reduce((acc, curr) => ({
+  const totalStats = analytics?.reduce<AnalyticsSummary>((acc, curr) => ({
     totalMembers: (acc.totalMembers || 0) + curr.total_members,
     totalContributions: (acc.totalContributions || 0) + curr.total_contributions,
     activeThriftSystems: (acc.activeThriftSystems || 0) + 1
-  }), {});
+  }), {
+    totalMembers: 0,
+    totalContributions: 0,
+    activeThriftSystems: 0
+  });
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ThriftAnalytics {
+  thrift_system_id: string;
+  total_members: number;
+  total_contributions: number;
+  active_members: number;
+}
+
 export const useThriftAnalytics = () => {
   return useQuery({
     queryKey: ['thrift-analytics'],
@@ -15,9 +22,9 @@ export const useThriftAnalytics = () => {
         throw error;
       }
 
-      return data;
+      return data as ThriftAnalytics[];
     },
     staleTime: 1000 * 60 * 30, // Consider data fresh for 30 minutes
-    cacheTime: 1000 * 60 * 60, // Cache for 1 hour
+    gcTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 };
