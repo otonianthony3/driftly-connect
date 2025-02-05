@@ -326,6 +326,13 @@ export type Database = {
             foreignKeyName: "memberships_thrift_system_id_fkey"
             columns: ["thrift_system_id"]
             isOneToOne: false
+            referencedRelation: "mv_thrift_analytics"
+            referencedColumns: ["thrift_system_id"]
+          },
+          {
+            foreignKeyName: "memberships_thrift_system_id_fkey"
+            columns: ["thrift_system_id"]
+            isOneToOne: false
             referencedRelation: "thrift_systems"
             referencedColumns: ["id"]
           },
@@ -488,6 +495,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_thrift_system_id_fkey"
+            columns: ["thrift_system_id"]
+            isOneToOne: false
+            referencedRelation: "mv_thrift_analytics"
+            referencedColumns: ["thrift_system_id"]
           },
           {
             foreignKeyName: "payouts_thrift_system_id_fkey"
@@ -816,6 +830,15 @@ export type Database = {
           f_table_schema?: unknown | null
           srid?: number | null
           type?: string | null
+        }
+        Relationships: []
+      }
+      mv_thrift_analytics: {
+        Row: {
+          active_members: number | null
+          thrift_system_id: string | null
+          total_contributions: number | null
+          total_members: number | null
         }
         Relationships: []
       }

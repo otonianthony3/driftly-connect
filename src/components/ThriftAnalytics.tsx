@@ -2,61 +2,42 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Loader2, TrendingUp, Users, DollarSign } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-interface AnalyticsData {
-  totalMembers: number;
-  totalContributions: number;
-  activeThriftSystems: number;
-  monthlyData: {
-    month: string;
-    contributions: number;
-    members: number;
-  }[];
-}
+import { useThriftAnalytics } from "@/hooks/use-thrift-analytics";
 
 const ThriftAnalytics = () => {
-  const { data: analytics, isLoading } = useQuery({
-    queryKey: ['thrift-analytics'],
+  const { data: analytics, isLoading } = useThriftAnalytics();
+
+  const { data: monthlyData } = useQuery({
+    queryKey: ['monthly-analytics'],
     queryFn: async () => {
-      console.log("Fetching analytics data...");
-      const { data: userData } = await supabase.auth.getUser();
-      
-      // Fetch total members
-      const { data: membersData } = await supabase
-        .from('memberships')
-        .select('id')
-        .eq('status', 'active');
-
-      // Fetch total contributions
-      const { data: contributionsData } = await supabase
+      console.log("Fetching monthly analytics data...");
+      const { data, error } = await supabase
         .from('contributions')
-        .select('amount');
+        .select(`
+          amount,
+          status,
+          created_at
+        `)
+        .gte('created_at', new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: true });
 
-      // Fetch active thrift systems
-      const { data: systemsData } = await supabase
-        .from('thrift_systems')
-        .select('id')
-        .eq('status', 'active');
+      if (error) throw error;
 
-      // Generate monthly data (last 6 months)
-      const monthlyData = Array.from({ length: 6 }, (_, i) => {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        return {
-          month: date.toLocaleString('default', { month: 'short' }),
-          contributions: Math.floor(Math.random() * 10000),
-          members: Math.floor(Math.random() * 100)
-        };
-      }).reverse();
+      // Process monthly data
+      const monthlyStats = data.reduce((acc, curr) => {
+        const month = new Date(curr.created_at).toLocaleString('default', { month: 'short' });
+        if (!acc[month]) {
+          acc[month] = { month, contributions: 0, members: new Set() };
+        }
+        if (curr.status === 'completed') {
+          acc[month].contributions += curr.amount;
+        }
+        return acc;
+      }, {});
 
-      return {
-        totalMembers: membersData?.length || 0,
-        totalContributions: contributionsData?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0,
-        activeThriftSystems: systemsData?.length || 0,
-        monthlyData
-      };
-    }
+      return Object.values(monthlyStats);
+    },
+    staleTime: 1000 * 60 * 15, // Consider data fresh for 15 minutes
   });
 
   if (isLoading) {
@@ -67,6 +48,12 @@ const ThriftAnalytics = () => {
     );
   }
 
+  const totalStats = analytics?.reduce((acc, curr) => ({
+    totalMembers: (acc.totalMembers || 0) + curr.total_members,
+    totalContributions: (acc.totalContributions || 0) + curr.total_contributions,
+    activeThriftSystems: (acc.activeThriftSystems || 0) + 1
+  }), {});
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
@@ -76,7 +63,7 @@ const ThriftAnalytics = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.totalMembers}</div>
+            <div className="text-2xl font-bold">{totalStats?.totalMembers || 0}</div>
           </CardContent>
         </Card>
 
@@ -86,7 +73,9 @@ const ThriftAnalytics = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${analytics?.totalContributions.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              ${totalStats?.totalContributions?.toLocaleString() || 0}
+            </div>
           </CardContent>
         </Card>
 
@@ -96,7 +85,7 @@ const ThriftAnalytics = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics?.activeThriftSystems}</div>
+            <div className="text-2xl font-bold">{totalStats?.activeThriftSystems || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -108,12 +97,11 @@ const ThriftAnalytics = () => {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics?.monthlyData}>
+              <BarChart data={monthlyData}>
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="contributions" fill="#0ea5e9" name="Contributions" />
-                <Bar dataKey="members" fill="#84cc16" name="Members" />
               </BarChart>
             </ResponsiveContainer>
           </div>
