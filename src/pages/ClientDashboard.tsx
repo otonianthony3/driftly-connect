@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge"; // Added Badge import
+import { useToast } from "@/hooks/use-toast"; // Added useToast import
 import { Loader2, Users, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThriftSystem } from "@/types/database";
