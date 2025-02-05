@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge"; // Added Badge import
-import { useToast } from "@/hooks/use-toast"; // Added useToast import
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2, Users, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThriftSystem } from "@/types/database";
@@ -107,7 +107,7 @@ const ClientDashboard = () => {
                     <div className="flex justify-between items-start">
                       <CardTitle className="line-clamp-1">{system.name}</CardTitle>
                       {isActive && (
-                        <Badge variant="success" className="ml-2">
+                        <Badge variant="default" className="ml-2">
                           Active
                         </Badge>
                       )}
