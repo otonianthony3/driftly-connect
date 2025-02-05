@@ -66,6 +66,7 @@ export type Database = {
           membership_id: string | null
           paid_date: string | null
           payment_intent_id: string | null
+          payment_provider: string | null
           status: string
         }
         Insert: {
@@ -76,6 +77,7 @@ export type Database = {
           membership_id?: string | null
           paid_date?: string | null
           payment_intent_id?: string | null
+          payment_provider?: string | null
           status: string
         }
         Update: {
@@ -86,6 +88,7 @@ export type Database = {
           membership_id?: string | null
           paid_date?: string | null
           payment_intent_id?: string | null
+          payment_provider?: string | null
           status?: string
         }
         Relationships: [
@@ -453,6 +456,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_provider_settings: {
+        Row: {
+          config: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          provider: string
+        }
+        Insert: {
+          config: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider?: string
+        }
+        Relationships: []
       }
       payouts: {
         Row: {
