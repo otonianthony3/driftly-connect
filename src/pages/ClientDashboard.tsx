@@ -23,6 +23,7 @@ const ClientDashboard = () => {
           *,
           memberships (
             id,
+            thrift_system_id,
             status,
             user_id,
             join_date,
@@ -47,8 +48,7 @@ const ClientDashboard = () => {
       if (activeMembers >= (system?.max_members || 0)) {
         toast({
           title: "System Full",
-          description: "This thrift system has reached its maximum member capacity.",
-          variant: "destructive",
+          description: "This th: "destructive",
         });
         return;
       }

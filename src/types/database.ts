@@ -9,17 +9,18 @@ export interface ThriftSystem {
   created_at: string | null;
   updated_at: string | null;
   status: string;
-  memberships?: Membership[]; // Added this property
+  admin_tier_id: string | null;
+  memberships?: Membership[];
 }
 
 export interface Membership {
   id: string;
-  thrift_system_id: string | null;
+  thrift_system_id: string;
   user_id: string | null;
   status: string;
   join_date: string | null;
   role: string;
-  profiles?: {  // Added this property
+  profiles?: {
     full_name: string | null;
     avatar_url: string | null;
     role: string;
