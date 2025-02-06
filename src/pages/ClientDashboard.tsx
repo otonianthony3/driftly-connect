@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, Shield } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThriftSystem } from "@/types/database";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -21,7 +21,13 @@ const ClientDashboard = () => {
         .from('thrift_systems')
         .select(`
           *,
-          memberships:memberships(id, status)
+          memberships (
+            id,
+            status,
+            user_id,
+            join_date,
+            role
+          )
         `);
 
       if (error) throw error;
