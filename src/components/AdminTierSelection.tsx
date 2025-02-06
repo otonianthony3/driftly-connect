@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Check, Star, Crown, BadgeCheck, Megaphone, LineChart, Wallet, Tool } from "lucide-react";
+import { Shield, Check, Star, Crown, BadgeCheck, Megaphone, LineChart, Wallet, Wrench } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -141,7 +141,7 @@ export function AdminTierSelection({ selectedTierId, onSelectTier }: AdminTierSe
               )}
               {tier.features.advanced_tools.enabled && (
                 <li className="flex items-center gap-2">
-                  <Tool className="h-4 w-4 text-indigo-500" />
+                  <Wrench className="h-4 w-4 text-indigo-500" />
                   Advanced admin tools
                 </li>
               )}
