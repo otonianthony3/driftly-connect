@@ -1,4 +1,4 @@
-import { Users, DollarSign, Bell, LogOut } from "lucide-react";
+import { Users, DollarSign, Bell, LogOut, UserCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +42,11 @@ export function AppNavigation() {
       title: "Notifications",
       url: "/notifications",
       icon: Bell,
+    },
+    {
+      title: "Profile",
+      url: "/profile",
+      icon: UserCircle,
     }
   ];
 
