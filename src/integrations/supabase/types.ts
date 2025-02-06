@@ -43,17 +43,58 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_verified: boolean | null
+          tier_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           id: string
+          is_verified?: boolean | null
+          tier_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_verified?: boolean | null
+          tier_id?: string | null
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_profiles_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "admin_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_tiers: {
+        Row: {
+          created_at: string
+          features: Json
+          id: string
+          max_groups: number
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          features: Json
+          id?: string
+          max_groups: number
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string
+          features?: Json
+          id?: string
+          max_groups?: number
+          name?: string
+          price?: number
         }
         Relationships: []
       }
@@ -708,6 +749,7 @@ export type Database = {
       thrift_systems: {
         Row: {
           admin_id: string
+          admin_tier_id: string | null
           contribution_amount: number
           created_at: string | null
           description: string | null
@@ -720,6 +762,7 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          admin_tier_id?: string | null
           contribution_amount: number
           created_at?: string | null
           description?: string | null
@@ -732,6 +775,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          admin_tier_id?: string | null
           contribution_amount?: number
           created_at?: string | null
           description?: string | null
@@ -748,6 +792,13 @@ export type Database = {
             columns: ["admin_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thrift_systems_admin_tier_id_fkey"
+            columns: ["admin_tier_id"]
+            isOneToOne: false
+            referencedRelation: "admin_tiers"
             referencedColumns: ["id"]
           },
         ]

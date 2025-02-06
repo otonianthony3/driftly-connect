@@ -10,6 +10,8 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -32,7 +34,44 @@ interface CreateThriftSystemProps {
 
 const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
   const navigate = useNavigate();
-  console.log("CreateThriftSystem rendered");
+  const [adminTier, setAdminTier] = useState<any>(null);
+  const [currentGroupCount, setCurrentGroupCount] = useState(0);
+
+  // Fetch admin tier and current group count
+  useQuery({
+    queryKey: ['adminTierCheck'],
+    queryFn: async () => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      // Get admin profile with tier
+      const { data: adminProfile, error: profileError } = await supabase
+        .from('admin_profiles')
+        .select('tier_id')
+        .eq('id', user.id)
+        .single();
+      if (profileError) throw profileError;
+
+      // Get tier details
+      const { data: tier, error: tierError } = await supabase
+        .from('admin_tiers')
+        .select('*')
+        .eq('id', adminProfile.tier_id)
+        .single();
+      if (tierError) throw tierError;
+
+      // Get current group count
+      const { count, error: countError } = await supabase
+        .from('thrift_systems')
+        .select('*', { count: 'exact' })
+        .eq('admin_id', user.id);
+      if (countError) throw countError;
+
+      setAdminTier(tier);
+      setCurrentGroupCount(count || 0);
+      return { tier, count };
+    }
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,7 +85,11 @@ const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log("Form submitted:", values);
+    if (currentGroupCount >= adminTier?.max_groups) {
+      toast.error(`You have reached the maximum number of groups (${adminTier.max_groups}) for your tier. Please upgrade to create more groups.`);
+      return;
+    }
+
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
@@ -60,7 +103,8 @@ const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
           max_members: Number(values.maxMembers),
           description: values.description || null,
           admin_id: userData.user.id,
-          status: 'active' // Add the required status field
+          status: 'active',
+          admin_tier_id: adminTier.id
         })
         .select()
         .single();
