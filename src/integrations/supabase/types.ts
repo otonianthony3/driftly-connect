@@ -46,6 +46,8 @@ export type Database = {
           is_verified: boolean | null
           tier_id: string | null
           updated_at: string
+          verification_status: Database["public"]["Enums"]["admin_verification_status"]
+          verified_at: string | null
         }
         Insert: {
           created_at?: string
@@ -53,6 +55,8 @@ export type Database = {
           is_verified?: boolean | null
           tier_id?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["admin_verification_status"]
+          verified_at?: string | null
         }
         Update: {
           created_at?: string
@@ -60,6 +64,8 @@ export type Database = {
           is_verified?: boolean | null
           tier_id?: string | null
           updated_at?: string
+          verification_status?: Database["public"]["Enums"]["admin_verification_status"]
+          verified_at?: string | null
         }
         Relationships: [
           {
@@ -3975,6 +3981,7 @@ export type Database = {
       }
     }
     Enums: {
+      admin_verification_status: "unverified" | "pending" | "verified"
       notification_type:
         | "message"
         | "ride_request"

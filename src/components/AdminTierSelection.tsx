@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Check, Star, Crown, X } from "lucide-react";
+import { Shield, Check, Star, Crown, BadgeCheck, Megaphone } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface AdminTierSelectionProps {
   selectedTierId: string | null;
@@ -28,7 +29,7 @@ export function AdminTierSelection({ selectedTierId, onSelectTier }: AdminTierSe
     return (
       <div className="grid gap-4 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-[300px]" />
+          <Skeleton key={i} className="h-[400px]" />
         ))}
       </div>
     );
@@ -49,12 +50,20 @@ export function AdminTierSelection({ selectedTierId, onSelectTier }: AdminTierSe
             </div>
           )}
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {tier.name === 'Basic' && <Shield className="h-5 w-5" />}
-              {tier.name === 'Premium' && <Star className="h-5 w-5" />}
-              {tier.name === 'Enterprise' && <Crown className="h-5 w-5" />}
-              {tier.name}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {tier.name === 'Basic' && <Shield className="h-5 w-5" />}
+                {tier.name === 'Premium' && <Star className="h-5 w-5 text-yellow-500" />}
+                {tier.name === 'Enterprise' && <Crown className="h-5 w-5 text-purple-500" />}
+                <CardTitle>{tier.name}</CardTitle>
+              </div>
+              {tier.features.verification_eligible && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <BadgeCheck className="h-4 w-4" />
+                  Verification
+                </Badge>
+              )}
+            </div>
             <CardDescription>
               Up to {tier.max_groups} groups
             </CardDescription>
@@ -64,18 +73,48 @@ export function AdminTierSelection({ selectedTierId, onSelectTier }: AdminTierSe
               ₦{tier.price.toLocaleString()}
             </div>
             <ul className="space-y-2">
-              {Object.entries(tier.features).map(([key, value]) => (
-                <li key={key} className="flex items-center gap-2">
-                  {value ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <X className="h-4 w-4 text-red-500" />
-                  )}
-                  {key.split('_').map(word => 
-                    word.charAt(0).toUpperCase() + word.slice(1)
-                  ).join(' ')}
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                Create up to {tier.max_groups} groups
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                Up to {tier.features.max_members_per_group} members per group
+              </li>
+              {tier.features.verification_eligible && (
+                <li className="flex items-center gap-2">
+                  <BadgeCheck className="h-4 w-4 text-blue-500" />
+                  Verification badge eligibility
                 </li>
-              ))}
+              )}
+              {tier.features.can_promote_groups && (
+                <li className="flex items-center gap-2">
+                  <Megaphone className="h-4 w-4 text-purple-500" />
+                  Promote groups in search
+                </li>
+              )}
+              {tier.features.featured_listing && (
+                <li className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  Featured listings
+                </li>
+              )}
+              <li className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                {tier.features.support_priority} support
+              </li>
+              {tier.features.analytics && (
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  Advanced analytics
+                </li>
+              )}
+              {tier.features.custom_branding && (
+                <li className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  Custom branding
+                </li>
+              )}
             </ul>
           </CardContent>
           <CardFooter>
