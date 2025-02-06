@@ -6,6 +6,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
+interface AdminTierFeatures {
+  can_create_groups: boolean;
+  max_members_per_group: number;
+  verification_eligible: boolean;
+  can_promote_groups: boolean;
+  support_priority: 'standard' | 'high' | 'priority';
+  analytics: boolean;
+  featured_listing?: boolean;
+  custom_branding?: boolean;
+}
+
+interface AdminTier {
+  id: string;
+  name: string;
+  max_groups: number;
+  price: number;
+  features: AdminTierFeatures;
+  created_at: string;
+}
+
 interface AdminTierSelectionProps {
   selectedTierId: string | null;
   onSelectTier: (tierId: string) => void;
@@ -21,7 +41,7 @@ export function AdminTierSelection({ selectedTierId, onSelectTier }: AdminTierSe
         .order('price');
       
       if (error) throw error;
-      return data;
+      return data as AdminTier[];
     }
   });
 
