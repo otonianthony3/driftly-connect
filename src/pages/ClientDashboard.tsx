@@ -8,10 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThriftSystem } from "@/types/database";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppNavigation } from "@/components/AppNavigation";
+import { useState } from "react";
 
 const ClientDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [joiningSystemIds, setJoiningSystemIds] = useState<string[]>([]);
   
   const { data: thriftSystems, isLoading } = useQuery({
     queryKey: ['thriftSystems'],
@@ -38,6 +40,8 @@ const ClientDashboard = () => {
 
   const handleJoinSystem = async (systemId: string) => {
     try {
+      setJoiningSystemIds(prev => [...prev, systemId]); // Disable button
+
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
@@ -107,6 +111,11 @@ const ClientDashboard = () => {
             {thriftSystems?.map((system) => {
               const activeMembers = system.memberships?.filter(m => m.status === 'active').length || 0;
               const isActive = activeMembers === system.max_members;
+              const isJoining = joiningSystemIds.includes(system.id);
+              const userHasPendingRequest = system.memberships?.some(m => 
+                m.user_id === supabase.auth.getUser()?.data?.user?.id && 
+                m.status === 'pending'
+              );
               
               return (
                 <Card key={system.id} className="flex flex-col">
@@ -134,9 +143,20 @@ const ClientDashboard = () => {
                       <Button 
                         className="w-full touch-manipulation"
                         onClick={() => handleJoinSystem(system.id)}
-                        disabled={activeMembers >= system.max_members}
+                        disabled={activeMembers >= system.max_members || isJoining || userHasPendingRequest}
                       >
-                        {activeMembers >= system.max_members ? "Full" : "Join System"}
+                        {isJoining ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Joining...
+                          </>
+                        ) : userHasPendingRequest ? (
+                          "Request Pending"
+                        ) : activeMembers >= system.max_members ? (
+                          "Full"
+                        ) : (
+                          "Join System"
+                        )}
                       </Button>
                     </div>
                   </CardContent>
