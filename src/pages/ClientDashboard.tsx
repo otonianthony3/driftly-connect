@@ -8,13 +8,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThriftSystem } from "@/types/database";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppNavigation } from "@/components/AppNavigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ClientDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [joiningSystemIds, setJoiningSystemIds] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    fetchUser();
+  }, []);
+
   const { data: thriftSystems, isLoading } = useQuery({
     queryKey: ['thriftSystems'],
     queryFn: async () => {
@@ -42,7 +53,7 @@ const ClientDashboard = () => {
     try {
       setJoiningSystemIds(prev => [...prev, systemId]); // Disable button
 
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
       // Check if system has reached max members
@@ -63,7 +74,7 @@ const ClientDashboard = () => {
         .insert([
           {
             thrift_system_id: systemId,
-            user_id: userData.user.id,
+            user_id: user.id,
             status: 'pending',
             role: 'member'
           }
@@ -113,7 +124,7 @@ const ClientDashboard = () => {
               const isActive = activeMembers === system.max_members;
               const isJoining = joiningSystemIds.includes(system.id);
               const userHasPendingRequest = system.memberships?.some(m => 
-                m.user_id === supabase.auth.getUser()?.data?.user?.id && 
+                m.user_id === currentUserId && 
                 m.status === 'pending'
               );
               
