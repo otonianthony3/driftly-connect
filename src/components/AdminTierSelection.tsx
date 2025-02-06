@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Check, Star, Crown, BadgeCheck, Megaphone } from "lucide-react";
+import { Shield, Check, Star, Crown, BadgeCheck, Megaphone, LineChart, Wallet, Tool } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,15 @@ interface AdminTierFeatures {
   analytics: boolean;
   featured_listing?: boolean;
   custom_branding?: boolean;
+  transaction_fees: {
+    enabled: boolean;
+    threshold: number;
+    percentage: number;
+  };
+  advanced_tools: {
+    enabled: boolean;
+    features: string[];
+  };
 }
 
 interface AdminTier {
@@ -124,16 +133,28 @@ export function AdminTierSelection({ selectedTierId, onSelectTier }: AdminTierSe
                   Featured listings
                 </li>
               )}
+              {tier.features.transaction_fees.enabled && (
+                <li className="flex items-center gap-2">
+                  <Wallet className="h-4 w-4 text-emerald-500" />
+                  {tier.features.transaction_fees.percentage}% fee on pools over ₦{tier.features.transaction_fees.threshold.toLocaleString()}
+                </li>
+              )}
+              {tier.features.advanced_tools.enabled && (
+                <li className="flex items-center gap-2">
+                  <Tool className="h-4 w-4 text-indigo-500" />
+                  Advanced admin tools
+                </li>
+              )}
+              {tier.features.analytics && (
+                <li className="flex items-center gap-2">
+                  <LineChart className="h-4 w-4 text-blue-500" />
+                  Advanced analytics & reports
+                </li>
+              )}
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-500" />
                 {tier.features.support_priority} support
               </li>
-              {tier.features.analytics && (
-                <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500" />
-                  Advanced analytics
-                </li>
-              )}
               {tier.features.custom_branding && (
                 <li className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-green-500" />
