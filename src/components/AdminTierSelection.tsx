@@ -41,7 +41,12 @@ export function AdminTierSelection({ selectedTierId, onSelectTier }: AdminTierSe
         .order('price');
       
       if (error) throw error;
-      return data as AdminTier[];
+      
+      // Safely cast the features JSON to our AdminTierFeatures type
+      return (data as any[]).map(tier => ({
+        ...tier,
+        features: tier.features as AdminTierFeatures
+      })) as AdminTier[];
     }
   });
 
