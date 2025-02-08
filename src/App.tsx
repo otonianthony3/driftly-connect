@@ -46,7 +46,7 @@ const SwipeHandler = () => {
         navigate(authenticatedRoutes[currentIndex - 1]);
       }
     },
-    preventDefaultTouchmoveEvent: true,
+    preventScrollOnSwipe: true,
     trackMouse: false
   });
 
