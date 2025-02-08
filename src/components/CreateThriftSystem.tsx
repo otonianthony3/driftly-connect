@@ -1,9 +1,13 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar"; 
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,7 +15,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 const formSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -23,6 +28,12 @@ const formSchema = z.object({
   }),
   maxMembers: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 1, {
     message: "Must have at least 2 members",
+  }),
+  cycleDuration: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+    message: "Cycle duration must be greater than 0",
+  }),
+  cycleStartDate: z.date({
+    required_error: "Please select a start date",
   }),
   description: z.string().optional(),
 });
@@ -80,6 +91,7 @@ const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
       contributionAmount: "",
       payoutSchedule: "",
       maxMembers: "",
+      cycleDuration: "",
       description: "",
     },
   });
@@ -101,6 +113,8 @@ const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
           contribution_amount: Number(values.contributionAmount),
           payout_schedule: values.payoutSchedule,
           max_members: Number(values.maxMembers),
+          cycle_duration: Number(values.cycleDuration),
+          cycle_start_date: values.cycleStartDate.toISOString(),
           description: values.description || null,
           admin_id: userData.user.id,
           status: 'active',
@@ -152,6 +166,62 @@ const CreateThriftSystem = ({ open, onClose }: CreateThriftSystemProps) => {
                   <FormControl>
                     <Input type="number" placeholder="Enter amount" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="cycleDuration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cycle Duration (months)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Enter duration" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="cycleStartDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Start Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date()
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
