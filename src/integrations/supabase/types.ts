@@ -172,6 +172,61 @@ export type Database = {
         }
         Relationships: []
       }
+      disbursement_preferences: {
+        Row: {
+          actual_position: number | null
+          bid_amount: number | null
+          created_at: string | null
+          id: string
+          member_id: string | null
+          preferred_position: number
+          status: string | null
+          thrift_system_id: string | null
+        }
+        Insert: {
+          actual_position?: number | null
+          bid_amount?: number | null
+          created_at?: string | null
+          id?: string
+          member_id?: string | null
+          preferred_position: number
+          status?: string | null
+          thrift_system_id?: string | null
+        }
+        Update: {
+          actual_position?: number | null
+          bid_amount?: number | null
+          created_at?: string | null
+          id?: string
+          member_id?: string | null
+          preferred_position?: number
+          status?: string | null
+          thrift_system_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disbursement_preferences_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disbursement_preferences_thrift_system_id_fkey"
+            columns: ["thrift_system_id"]
+            isOneToOne: false
+            referencedRelation: "mv_thrift_analytics"
+            referencedColumns: ["thrift_system_id"]
+          },
+          {
+            foreignKeyName: "disbursement_preferences_thrift_system_id_fkey"
+            columns: ["thrift_system_id"]
+            isOneToOne: false
+            referencedRelation: "thrift_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_profiles: {
         Row: {
           created_at: string | null
@@ -758,6 +813,8 @@ export type Database = {
           admin_tier_id: string | null
           contribution_amount: number
           created_at: string | null
+          cycle_duration: number
+          cycle_start_date: string | null
           description: string | null
           id: string
           max_members: number
@@ -771,6 +828,8 @@ export type Database = {
           admin_tier_id?: string | null
           contribution_amount: number
           created_at?: string | null
+          cycle_duration?: number
+          cycle_start_date?: string | null
           description?: string | null
           id?: string
           max_members: number
@@ -784,6 +843,8 @@ export type Database = {
           admin_tier_id?: string | null
           contribution_amount?: number
           created_at?: string | null
+          cycle_duration?: number
+          cycle_start_date?: string | null
           description?: string | null
           id?: string
           max_members?: number
