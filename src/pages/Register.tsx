@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +19,12 @@ const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedTierId) {
+      toast.error("Please select an admin tier");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -101,7 +108,7 @@ const Register = () => {
             type="submit"
             className="w-full h-11 sm:h-10 text-base sm:text-sm"
             size={isMobile ? "lg" : "default"}
-            disabled={isLoading || !selectedTierId}
+            disabled={isLoading}
           >
             {isLoading ? "Creating account..." : "Create account"}
           </Button>
