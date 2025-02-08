@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Users, Calendar, DollarSign } from "lucide-react";
+import { Users, Calendar, DollarSign, Bank } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import ContributionTracker from "@/components/ContributionTracker";
@@ -12,6 +11,8 @@ import MemberManagement from "@/components/MemberManagement";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { DisbursementPreference } from "@/components/DisbursementPreference";
+import BankAccountForm from "@/components/BankAccountForm";
+import BankAccountList from "@/components/BankAccountList";
 
 const ThriftSystemDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -109,7 +110,10 @@ const ThriftSystemDetails = () => {
     return (
       <Card className="hover:shadow-lg transition-shadow">
         <CardHeader>
-          <CardTitle>Disbursement Schedule</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Bank className="h-5 w-5" />
+            Disbursement Details
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -125,6 +129,14 @@ const ThriftSystemDetails = () => {
                 </p>
               </div>
             </div>
+            
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Escrow Status</p>
+              <Badge variant={system.is_escrow_enabled ? "success" : "secondary"}>
+                {system.is_escrow_enabled ? "Enabled" : "Disabled"}
+              </Badge>
+            </div>
+
             <Button 
               className="w-full"
               onClick={() => setShowPreferenceDialog(true)}
@@ -197,6 +209,8 @@ const ThriftSystemDetails = () => {
         <ContributionTracker thriftSystemId={system?.id || ''} />
         <MemberManagement thriftSystemId={system?.id || ''} />
         {renderDisbursementSection()}
+        <BankAccountForm />
+        <BankAccountList />
       </div>
 
       {showPreferenceDialog && system && (

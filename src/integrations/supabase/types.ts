@@ -104,6 +104,42 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          verification_status: string
+          verified_at: string | null
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          verification_status?: string
+          verified_at?: string | null
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bank_name?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          verification_status?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       contributions: {
         Row: {
           amount: number
@@ -585,9 +621,13 @@ export type Database = {
       }
       payouts: {
         Row: {
+          admin_pause_reason: string | null
+          admin_paused: boolean | null
           amount: number
+          bank_account_id: string | null
           completed_date: string | null
           created_at: string | null
+          escrow_reference: string | null
           id: string
           member_id: string
           payment_intent_id: string | null
@@ -596,9 +636,13 @@ export type Database = {
           thrift_system_id: string
         }
         Insert: {
+          admin_pause_reason?: string | null
+          admin_paused?: boolean | null
           amount: number
+          bank_account_id?: string | null
           completed_date?: string | null
           created_at?: string | null
+          escrow_reference?: string | null
           id?: string
           member_id: string
           payment_intent_id?: string | null
@@ -607,9 +651,13 @@ export type Database = {
           thrift_system_id: string
         }
         Update: {
+          admin_pause_reason?: string | null
+          admin_paused?: boolean | null
           amount?: number
+          bank_account_id?: string | null
           completed_date?: string | null
           created_at?: string | null
+          escrow_reference?: string | null
           id?: string
           member_id?: string
           payment_intent_id?: string | null
@@ -618,6 +666,13 @@ export type Database = {
           thrift_system_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payouts_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payouts_member_id_fkey"
             columns: ["member_id"]
@@ -817,6 +872,7 @@ export type Database = {
           cycle_start_date: string | null
           description: string | null
           id: string
+          is_escrow_enabled: boolean | null
           max_members: number
           name: string
           payout_schedule: string
@@ -832,6 +888,7 @@ export type Database = {
           cycle_start_date?: string | null
           description?: string | null
           id?: string
+          is_escrow_enabled?: boolean | null
           max_members: number
           name: string
           payout_schedule: string
@@ -847,6 +904,7 @@ export type Database = {
           cycle_start_date?: string | null
           description?: string | null
           id?: string
+          is_escrow_enabled?: boolean | null
           max_members?: number
           name?: string
           payout_schedule?: string
