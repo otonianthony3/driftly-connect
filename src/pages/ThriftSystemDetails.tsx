@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Users, Calendar, DollarSign, Bank } from "lucide-react";
+import { Users, Calendar, DollarSign, Banknote } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import ContributionTracker from "@/components/ContributionTracker";
@@ -111,7 +112,7 @@ const ThriftSystemDetails = () => {
       <Card className="hover:shadow-lg transition-shadow">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bank className="h-5 w-5" />
+            <Banknote className="h-5 w-5" />
             Disbursement Details
           </CardTitle>
         </CardHeader>

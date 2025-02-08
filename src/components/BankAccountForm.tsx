@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,26 @@ export default function BankAccountForm() {
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUserId();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      toast.error("Please log in to add bank account details");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -24,6 +40,7 @@ export default function BankAccountForm() {
         bank_name: bankName,
         account_number: accountNumber,
         account_name: accountName,
+        user_id: userId,
       });
 
       if (error) throw error;
@@ -77,7 +94,7 @@ export default function BankAccountForm() {
             />
           </div>
 
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || !userId}>
             {isSubmitting ? "Saving..." : "Save Bank Details"}
           </Button>
         </form>
