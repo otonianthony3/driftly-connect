@@ -3,8 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -17,8 +19,60 @@ import ProfileManagement from "./pages/ProfileManagement";
 import PasswordReset from "./pages/PasswordReset";
 import UpdatePassword from "./pages/UpdatePassword";
 import { NotificationBell } from "./components/NotificationBell";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
+
+// Protected Route wrapper component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session) {
+          navigate('/login');
+          return;
+        }
+        setAuthenticated(true);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        setAuthenticated(true);
+      } else if (event === 'SIGNED_OUT') {
+        setAuthenticated(false);
+        navigate('/login');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  return authenticated ? <>{children}</> : <Navigate to="/login" />;
+};
 
 // Helper component to handle swipe navigation
 const SwipeHandler = () => {
@@ -87,14 +141,40 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/client/dashboard" element={<ClientDashboard />} />
-            <Route path="/thrift-system/:id" element={<ThriftSystemDetails />} />
-            <Route path="/payouts/history" element={<PayoutHistory />} />
-            <Route path="/admin/payouts" element={<PayoutManagement />} />
-            <Route path="/profile" element={<ProfileManagement />} />
             <Route path="/reset-password" element={<PasswordReset />} />
             <Route path="/update-password" element={<UpdatePassword />} />
+            
+            {/* Protected Routes */}
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/client/dashboard" element={
+              <ProtectedRoute>
+                <ClientDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/thrift-system/:id" element={
+              <ProtectedRoute>
+                <ThriftSystemDetails />
+              </ProtectedRoute>
+            } />
+            <Route path="/payouts/history" element={
+              <ProtectedRoute>
+                <PayoutHistory />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/payouts" element={
+              <ProtectedRoute>
+                <PayoutManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfileManagement />
+              </ProtectedRoute>
+            } />
           </Routes>
         </BrowserRouter>
       </div>
