@@ -56,6 +56,52 @@ const PayoutManagement = () => {
     }
   };
 
+  const handleEarlyPayoutRequest = async (payoutId: string) => {
+    try {
+      // Deduct ₦1000 from the user's account
+      const priorityFee = 1000;
+  
+      // Fetch user balance (assuming a `wallets` table exists)
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: wallet, error: walletError } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", userData.user?.id)
+        .single();
+  
+      if (walletError) throw walletError;
+      if (wallet.balance < priorityFee) {
+        toast.error("Insufficient balance for early payout request.");
+        return;
+      }
+  
+      // Deduct fee from wallet
+      const { error: deductError } = await supabase
+        .from("wallets")
+        .update({ balance: wallet.balance - priorityFee })
+        .eq("user_id", userData.user?.id);
+  
+      if (deductError) throw deductError;
+  
+      // Update payout with priority fee and reschedule payout earlier
+      const { error: updateError } = await supabase
+        .from("payouts")
+        .update({
+          priority_fee: priorityFee,
+          scheduled_date: new Date().toISOString(), // Moves payout up
+        })
+        .eq("id", payoutId);
+  
+      if (updateError) throw updateError;
+  
+      toast.success("Early payout request successful!");
+    } catch (error) {
+      console.error("Error requesting early payout:", error);
+      toast.error("Failed to request early payout.");
+    }
+  };
+  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -133,53 +179,43 @@ const PayoutManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {payouts?.map((payout) => (
-                <TableRow key={payout.id}>
-                  <TableCell>{payout.thrift_systems.name}</TableCell>
-                  <TableCell>{payout.profiles.full_name}</TableCell>
-                  <TableCell>${payout.amount}</TableCell>
-                  <TableCell>
-                    {new Date(payout.scheduled_date).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      payout.status === 'completed' 
-                        ? 'bg-green-100 text-green-800'
-                        : payout.status === 'processing'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {payout.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {payout.status === 'pending' && (
-                      <Button 
-                        size="sm"
-                        onClick={() => handlePayoutAction(payout.id, 'process')}
-                      >
-                        Process
-                      </Button>
-                    )}
-                    {payout.status === 'processing' && (
-                      <Button 
-                        size="sm"
-                        onClick={() => handlePayoutAction(payout.id, 'complete')}
-                      >
-                        Complete
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!payouts?.length && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No payouts found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
+  {payouts?.map((payout) => (
+    <TableRow key={payout.id}>
+      <TableCell>{payout.thrift_systems.name}</TableCell>
+      <TableCell>{payout.profiles.full_name}</TableCell>
+      <TableCell>${payout.amount}</TableCell>
+      <TableCell>{new Date(payout.scheduled_date).toLocaleDateString()}</TableCell>
+      <TableCell>
+        <span className={`px-2 py-1 rounded-full text-xs ${
+          payout.status === 'completed' 
+            ? 'bg-green-100 text-green-800'
+            : payout.status === 'processing'
+            ? 'bg-blue-100 text-blue-800'
+            : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {payout.status}
+        </span>
+      </TableCell>
+      <TableCell>
+  {payout.status === 'pending' && (
+    <>
+      <Button onClick={() => handlePayoutAction(payout.id, 'process')}>
+        Process
+      </Button>
+      <Button 
+        className="ml-2 bg-blue-500 text-white"
+        onClick={() => handleEarlyPayoutRequest(payout.id)}
+      >
+        Request Early Payout (₦1000)
+      </Button>
+    </>
+  )}
+</TableCell>
+
+    </TableRow>
+  ))}
+</TableBody>
+
           </Table>
         </CardContent>
       </Card>
