@@ -63,11 +63,16 @@ const PayoutManagement = () => {
   
       // Fetch user balance (assuming a `wallets` table exists)
       const { data: userData } = await supabase.auth.getUser();
-      const { data: wallet, error: walletError } = await supabase
-        .from("wallets")
-        .select("balance")
-        .eq("user_id", userData.user?.id)
-        .single();
+      const { data: walletData, error: walletError } = await supabase
+  .from("wallets")
+  .select("*")
+  .eq("user_id", userData.user?.id)
+  .single();
+
+if (walletError) throw walletError;
+
+const userBalance = walletData?.balance ?? 0;
+
   
       if (walletError) throw walletError;
       if (wallet.balance < priorityFee) {
@@ -77,9 +82,10 @@ const PayoutManagement = () => {
   
       // Deduct fee from wallet
       const { error: deductError } = await supabase
-        .from("wallets")
-        .update({ balance: wallet.balance - priorityFee })
-        .eq("user_id", userData.user?.id);
+  .from("wallets")
+  .update({ balance: userBalance - priorityFee })
+  .eq("user_id", userData.user?.id);
+
   
       if (deductError) throw deductError;
   
