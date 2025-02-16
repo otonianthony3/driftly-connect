@@ -1,4 +1,5 @@
 
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,8 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from
 import { useSwipeable } from "react-swipeable";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+import Layout from "./components/Layout"; 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -82,9 +85,11 @@ const SwipeHandler = () => {
   // Define the navigation order for authenticated routes
   const authenticatedRoutes = [
     '/client/dashboard',
+    '/Admin/dashboard',
     '/payouts/history',
     '/notifications',
     '/profile'
+    
   ];
 
   const handlers = useSwipeable({
@@ -112,6 +117,10 @@ const SwipeHandler = () => {
   return <div {...handlers} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }} />;
 };
 
+
+
+
+
 // Helper component to conditionally render NotificationBell
 const ConditionalNotificationBell = () => {
   const location = useLocation();
@@ -130,56 +139,38 @@ const ConditionalNotificationBell = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <div className="min-h-screen">
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <SwipeHandler />
-          <ConditionalNotificationBell />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/reset-password" element={<PasswordReset />} />
-            <Route path="/update-password" element={<UpdatePassword />} />
-            
-            {/* Protected Routes */}
-            <Route path="/admin/dashboard" element={
-              <ProtectedRoute>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/client/dashboard" element={
-              <ProtectedRoute>
-                <ClientDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/thrift-system/:id" element={
-              <ProtectedRoute>
-                <ThriftSystemDetails />
-              </ProtectedRoute>
-            } />
-            <Route path="/payouts/history" element={
-              <ProtectedRoute>
-                <PayoutHistory />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/payouts" element={
-              <ProtectedRoute>
-                <PayoutManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <ProfileManagement />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </BrowserRouter>
-      </div>
-    </TooltipProvider>
+    <SidebarProvider>
+      <TooltipProvider>
+        <div className="min-h-screen">
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>                       
+            <SwipeHandler />
+            <ConditionalNotificationBell />
+            <Routes>
+              {/* Public Routes (No Sidebar) */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<PasswordReset />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
+
+              {/* Protected Routes (With Sidebar Layout) */}
+              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route path="admin/dashboard" element={<AdminDashboard />} />
+                <Route path="client/dashboard" element={<ClientDashboard />} />
+                <Route path="thrift-system/:id" element={<ThriftSystemDetails />} />
+                <Route path="payouts/history" element={<PayoutHistory />} />
+                <Route path="admin/payouts" element={<PayoutManagement />} />
+                <Route path="profile" element={<ProfileManagement />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </div>
+      </TooltipProvider>
+    </SidebarProvider>
   </QueryClientProvider>
 );
 
 export default App;
+
