@@ -60,7 +60,7 @@ export function AppNavigation() {
     { title: "Admin Dashboard", url: "/admin/dashboard", icon: SettingsIcon }, // Added Admin Dashboard
     { title: "Thrift System Details", url: "/thrift/details", icon: SettingsIcon }, // Added Thrift System Details
     { title: "Payout History", url: "/payouts/history", icon: DollarSignIcon },
-    { title: "Payout Management", url: "/payouts/manage", icon: DollarSignIcon }, // Added Payout Management
+    { title: "Payout Management", url: "/admin/payouts", icon: DollarSignIcon }, // Added Payout Management
     { title: "Notifications", url: "/notifications", icon: BellIcon },
     { title: "Profile", url: "/profile", icon: UserCircleIcon }
   ];

@@ -65,20 +65,19 @@ const PayoutManagement = () => {
       const { data: userData } = await supabase.auth.getUser();
       const { data: walletData, error: walletError } = await supabase
   .from("wallets")
-  .select("*")
+  .select("balance") // Only select the balance column
   .eq("user_id", userData.user?.id)
   .single();
 
 if (walletError) throw walletError;
 
-const userBalance = walletData?.balance ?? 0;
+const userBalance = walletData?.balance ?? 0; // Assign the correct balance
 
-  
-      if (walletError) throw walletError;
-      if (wallet.balance < priorityFee) {
-        toast.error("Insufficient balance for early payout request.");
-        return;
-      }
+if (userBalance < priorityFee) { // ✅ Corrected check
+  toast.error("Insufficient balance for early payout request.");
+  return;
+}
+
   
       // Deduct fee from wallet
       const { error: deductError } = await supabase
