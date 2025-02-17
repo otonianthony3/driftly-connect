@@ -9,7 +9,8 @@ import { toast } from "sonner";
 const PayoutManagement = () => {
   const { data: payouts, isLoading } = useQuery({
     queryKey: ['admin-payouts'],
-    queryFn: async () => {
+    queryFn: async (): Promise<any> => { // ✅ Explicit return type
+  
       console.log("Fetching admin payouts...");
       const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase
@@ -64,16 +65,23 @@ const PayoutManagement = () => {
       // Fetch user balance (assuming a `wallets` table exists)
       const { data: userData } = await supabase.auth.getUser();
       const { data: walletData, error: walletError } = await supabase
-  .from("wallets")
-  .select("balance") // Only select the balance column
-  .eq("user_id", userData.user?.id)
-  .single();
+      .from("wallets")
+      .select("balance")
+      
+  .select("balance")
+  .eq("user_id", String(userData.user?.id))
+
+  .maybeSingle();
+
+
 
 if (walletError) throw walletError;
 
-const userBalance = walletData?.balance ?? 0; // Assign the correct balance
+const userBalance = walletData && "balance" in walletData ? walletData.balance : 0;
 
-if (userBalance < priorityFee) { // ✅ Corrected check
+
+if ((userBalance as number) < priorityFee) { 
+  // ✅ Corrected check
   toast.error("Insufficient balance for early payout request.");
   return;
 }
@@ -83,7 +91,8 @@ if (userBalance < priorityFee) { // ✅ Corrected check
       const { error: deductError } = await supabase
   .from("wallets")
   .update({ balance: userBalance - priorityFee })
-  .eq("user_id", userData.user?.id);
+  .eq("user_id", String(userData.user?.id))
+
 
   
       if (deductError) throw deductError;
@@ -201,25 +210,23 @@ if (userBalance < priorityFee) { // ✅ Corrected check
           {payout.status}
         </span>
       </TableCell>
-      <TableCell>
-  {payout.status === 'pending' && (
-    <>
-      <Button onClick={() => handlePayoutAction(payout.id, 'process')}>
-        Process
-      </Button>
-      <Button 
-        className="ml-2 bg-blue-500 text-white"
-        onClick={() => handleEarlyPayoutRequest(payout.id)}
-      >
-        Request Early Payout (₦1000)
-      </Button>
-    </>
-  )}
-</TableCell>
 
+      {/* ✅ Corrected TableCell */}
+      <TableCell>
+        <Button 
+          size="sm"
+          className={`ml-2 ${payout.status === 'pending' ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-600 cursor-not-allowed"}`}
+          onClick={() => handleEarlyPayoutRequest(payout.id)}
+          disabled={payout.status === 'processing' || payout.status === 'completed'} 
+        >
+          Request Early Payout (₦1000)
+        </Button>
+      </TableCell>
+      
     </TableRow>
   ))}
 </TableBody>
+
 
           </Table>
         </CardContent>
