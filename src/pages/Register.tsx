@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +5,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AdminTierSelection } from "@/components/AdminTierSelection";
+// Removed: import { AdminTierSelection } from "@/components/AdminTierSelection";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -14,27 +13,31 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
+  // Removed: const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedTierId) {
-      toast.error("Please select an admin tier");
-      return;
-    }
+    // Removed admin tier check
+    // if (!selectedTierId) {
+    //   toast.error("Please select an admin tier");
+    //   return;
+    // }
 
     setIsLoading(true);
 
     try {
+      // Create the user without sending an admin tier.
+      // Optionally, you can set a default role by including role: "client" if your backend supports it.
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-            tier_id: selectedTierId
+            // Removed tier_id so that the user is created as a client by default.
+            // If needed, you could explicitly set it: role: "client"
           },
           emailRedirectTo: window.location.origin
         }
@@ -64,14 +67,15 @@ const Register = () => {
         <div className="text-center space-y-2">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Create an account</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Choose your admin tier and enter your details to get started
+            Enter your details to get started
           </p>
         </div>
 
-        <AdminTierSelection 
+        {/* Removed AdminTierSelection */}
+        {/* <AdminTierSelection 
           selectedTierId={selectedTierId} 
           onSelectTier={setSelectedTierId} 
-        />
+        /> */}
 
         <form onSubmit={handleRegister} className="space-y-4 max-w-md mx-auto">
           <div className="space-y-2">
