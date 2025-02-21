@@ -631,6 +631,7 @@ export type Database = {
           id: string
           member_id: string
           payment_intent_id: string | null
+          priority_fee: number | null
           scheduled_date: string
           status: string
           thrift_system_id: string
@@ -646,6 +647,7 @@ export type Database = {
           id?: string
           member_id: string
           payment_intent_id?: string | null
+          priority_fee?: number | null
           scheduled_date: string
           status?: string
           thrift_system_id: string
@@ -661,6 +663,7 @@ export type Database = {
           id?: string
           member_id?: string
           payment_intent_id?: string | null
+          priority_fee?: number | null
           scheduled_date?: string
           status?: string
           thrift_system_id?: string
@@ -991,6 +994,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wallets: {
+        Row: {
+          balance: number | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          balance?: number | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          balance?: number | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
