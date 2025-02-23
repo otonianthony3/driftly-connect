@@ -16,6 +16,7 @@ const ClientDashboard = () => {
   const queryClient = useQueryClient();
   const [joiningSystemIds, setJoiningSystemIds] = useState<string[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [cancellingIds, setCancellingIds] = useState<string[]>([]);
   
   useEffect(() => {
     const fetchUser = async () => {
@@ -74,16 +75,23 @@ const ClientDashboard = () => {
         .eq('id', membership.id);
 
       if (deleteError) throw deleteError;
+
+      return systemId;
     },
-    onSuccess: () => {
+    onMutate: (systemId) => {
+      setCancellingIds(prev => [...prev, systemId]);
+    },
+    onSuccess: (systemId) => {
       queryClient.invalidateQueries({ queryKey: ['thriftSystems'] });
+      setCancellingIds(prev => prev.filter(id => id !== systemId));
       toast({
         title: "Request Cancelled",
         description: "Your join request has been cancelled successfully.",
       });
     },
-    onError: (error) => {
+    onError: (error, systemId) => {
       console.error("Error cancelling request:", error);
+      setCancellingIds(prev => prev.filter(id => id !== systemId));
       toast({
         title: "Error",
         description: "Failed to cancel join request. Please try again.",
@@ -94,7 +102,7 @@ const ClientDashboard = () => {
 
   const handleJoinSystem = async (systemId: string) => {
     try {
-      setJoiningSystemIds(prev => [...prev, systemId]); // Disable button
+      setJoiningSystemIds(prev => [...prev, systemId]);
 
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
@@ -172,6 +180,7 @@ const ClientDashboard = () => {
               const activeMembers = system.memberships?.filter(m => m.status === 'active').length || 0;
               const isActive = activeMembers === system.max_members;
               const isJoining = joiningSystemIds.includes(system.id);
+              const isCancelling = cancellingIds.includes(system.id);
               const userHasPendingRequest = system.memberships?.some(m => 
                 m.user_id === currentUserId && 
                 m.status === 'pending'
@@ -205,8 +214,16 @@ const ClientDashboard = () => {
                           className="w-full"
                           variant="destructive"
                           onClick={() => handleCancelRequest(system.id)}
+                          disabled={isCancelling}
                         >
-                          Cancel Request
+                          {isCancelling ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Cancelling...
+                            </>
+                          ) : (
+                            "Cancel Request"
+                          )}
                         </Button>
                       ) : (
                         <Button 
