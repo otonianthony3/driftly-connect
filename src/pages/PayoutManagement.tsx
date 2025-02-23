@@ -9,10 +9,10 @@ import { toast } from "sonner";
 const PayoutManagement = () => {
   const { data: payouts, isLoading } = useQuery({
     queryKey: ['admin-payouts'],
-    queryFn: async (): Promise<any> => { // ✅ Explicit return type
-  
+    queryFn: async (): Promise<any> => {
       console.log("Fetching admin payouts...");
       const { data: userData } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('payouts')
         .select(`
@@ -28,7 +28,7 @@ const PayoutManagement = () => {
             avatar_url
           )
         `)
-        .eq('thrift_systems.admin_id', userData.user?.id)
+        .filter('thrift_systems.admin_id', 'eq', userData.user?.id)
         .order('scheduled_date', { ascending: true });
 
       if (error) throw error;
@@ -59,50 +59,36 @@ const PayoutManagement = () => {
 
   const handleEarlyPayoutRequest = async (payoutId: string) => {
     try {
-      // Deduct ₦1000 from the user's account
       const priorityFee = 1000;
   
-      // Fetch user balance (assuming a `wallets` table exists)
       const { data: userData } = await supabase.auth.getUser();
       const { data: walletData, error: walletError } = await supabase
-      .from("wallets")
-      .select("balance")
-      
-  .select("balance")
-  .eq("user_id", String(userData.user?.id))
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", userData.user?.id)
+        .single();
 
-  .maybeSingle();
+      if (walletError) throw walletError;
 
+      const userBalance = walletData?.balance || 0;
 
-
-if (walletError) throw walletError;
-
-const userBalance = walletData && "balance" in walletData ? walletData.balance : 0;
-
-
-if ((userBalance as number) < priorityFee) { 
-  // ✅ Corrected check
-  toast.error("Insufficient balance for early payout request.");
-  return;
-}
-
+      if (userBalance < priorityFee) {
+        toast.error("Insufficient balance for early payout request.");
+        return;
+      }
   
-      // Deduct fee from wallet
       const { error: deductError } = await supabase
-  .from("wallets")
-  .update({ balance: userBalance - priorityFee })
-  .eq("user_id", String(userData.user?.id))
-
-
+        .from("wallets")
+        .update({ balance: userBalance - priorityFee })
+        .eq("user_id", userData.user?.id);
   
       if (deductError) throw deductError;
   
-      // Update payout with priority fee and reschedule payout earlier
       const { error: updateError } = await supabase
         .from("payouts")
         .update({
           priority_fee: priorityFee,
-          scheduled_date: new Date().toISOString(), // Moves payout up
+          scheduled_date: new Date().toISOString(),
         })
         .eq("id", payoutId);
   
@@ -114,7 +100,6 @@ if ((userBalance as number) < priorityFee) {
       toast.error("Failed to request early payout.");
     }
   };
-  
 
   if (isLoading) {
     return (
@@ -193,41 +178,36 @@ if ((userBalance as number) < priorityFee) {
               </TableRow>
             </TableHeader>
             <TableBody>
-  {payouts?.map((payout) => (
-    <TableRow key={payout.id}>
-      <TableCell>{payout.thrift_systems.name}</TableCell>
-      <TableCell>{payout.profiles.full_name}</TableCell>
-      <TableCell>${payout.amount}</TableCell>
-      <TableCell>{new Date(payout.scheduled_date).toLocaleDateString()}</TableCell>
-      <TableCell>
-        <span className={`px-2 py-1 rounded-full text-xs ${
-          payout.status === 'completed' 
-            ? 'bg-green-100 text-green-800'
-            : payout.status === 'processing'
-            ? 'bg-blue-100 text-blue-800'
-            : 'bg-yellow-100 text-yellow-800'
-        }`}>
-          {payout.status}
-        </span>
-      </TableCell>
-
-      {/* ✅ Corrected TableCell */}
-      <TableCell>
-        <Button 
-          size="sm"
-          className={`ml-2 ${payout.status === 'pending' ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-600 cursor-not-allowed"}`}
-          onClick={() => handleEarlyPayoutRequest(payout.id)}
-          disabled={payout.status === 'processing' || payout.status === 'completed'} 
-        >
-          Request Early Payout (₦1000)
-        </Button>
-      </TableCell>
-      
-    </TableRow>
-  ))}
-</TableBody>
-
-
+              {payouts?.map((payout) => (
+                <TableRow key={payout.id}>
+                  <TableCell>{payout.thrift_systems.name}</TableCell>
+                  <TableCell>{payout.profiles.full_name}</TableCell>
+                  <TableCell>${payout.amount}</TableCell>
+                  <TableCell>{new Date(payout.scheduled_date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      payout.status === 'completed' 
+                        ? 'bg-green-100 text-green-800'
+                        : payout.status === 'processing'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {payout.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Button 
+                      size="sm"
+                      className={`ml-2 ${payout.status === 'pending' ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-600 cursor-not-allowed"}`}
+                      onClick={() => handleEarlyPayoutRequest(payout.id)}
+                      disabled={payout.status === 'processing' || payout.status === 'completed'} 
+                    >
+                      Request Early Payout (₦1000)
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
           </Table>
         </CardContent>
       </Card>
