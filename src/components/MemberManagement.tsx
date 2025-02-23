@@ -70,11 +70,19 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
       
       if (action === 'approve') {
         // First, verify the member isn't already in the system
+        const { data: membershipData } = await supabase
+          .from('memberships')
+          .select('user_id')
+          .eq('id', memberId)
+          .single();
+
+        if (!membershipData) throw new Error('Membership not found');
+
         const { data: existingMember } = await supabase
           .from('memberships')
           .select('id')
           .eq('thrift_system_id', thriftSystemId)
-          .eq('user_id', memberId)
+          .eq('user_id', membershipData.user_id)
           .eq('status', 'active')
           .single();
 
@@ -83,7 +91,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
         }
 
         // Update the pending request to active
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from('memberships')
           .update({ 
             status: 'active',
@@ -92,15 +100,49 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
           })
           .eq('id', memberId);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
+
+        // Create notification for approved member
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: membershipData.user_id,
+            type: 'membership_approved',
+            message: 'Your membership request has been approved! Please add your bank account details for disbursement.'
+          });
+
+        if (notificationError) throw notificationError;
+
       } else if (action === 'reject' || action === 'remove') {
+        // Get user_id before deleting membership
+        const { data: membershipData } = await supabase
+          .from('memberships')
+          .select('user_id')
+          .eq('id', memberId)
+          .single();
+
+        if (!membershipData) throw new Error('Membership not found');
+
         // Delete the membership entry
-        const { error } = await supabase
+        const { error: deleteError } = await supabase
           .from('memberships')
           .delete()
           .eq('id', memberId);
 
-        if (error) throw error;
+        if (deleteError) throw deleteError;
+
+        // Only create rejection notification if action is reject (not remove)
+        if (action === 'reject') {
+          const { error: notificationError } = await supabase
+            .from('notifications')
+            .insert({
+              user_id: membershipData.user_id,
+              type: 'membership_rejected',
+              message: 'Your membership request has been rejected.'
+            });
+
+          if (notificationError) throw notificationError;
+        }
       } else if (action === 'promote' || action === 'demote') {
         const { error } = await supabase
           .from('memberships')
