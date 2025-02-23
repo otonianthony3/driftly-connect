@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,48 @@ const ClientDashboard = () => {
     }
   });
 
+  const cancelRequestMutation = useMutation({
+    mutationFn: async (systemId: string) => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      // Find the membership ID for this user and system
+      const { data: membership, error: membershipError } = await supabase
+        .from('memberships')
+        .select('id')
+        .eq('thrift_system_id', systemId)
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .single();
+
+      if (membershipError) throw membershipError;
+      if (!membership) throw new Error('Membership request not found');
+
+      // Delete the membership request
+      const { error: deleteError } = await supabase
+        .from('memberships')
+        .delete()
+        .eq('id', membership.id);
+
+      if (deleteError) throw deleteError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['thriftSystems'] });
+      toast({
+        title: "Request Cancelled",
+        description: "Your join request has been cancelled successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error cancelling request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel join request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleJoinSystem = async (systemId: string) => {
     try {
       setJoiningSystemIds(prev => [...prev, systemId]); // Disable button
@@ -95,7 +138,13 @@ const ClientDashboard = () => {
         description: "Failed to join the system. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setJoiningSystemIds(prev => prev.filter(id => id !== systemId));
     }
+  };
+
+  const handleCancelRequest = (systemId: string) => {
+    cancelRequestMutation.mutate(systemId);
   };
 
   if (isLoading) {
@@ -151,24 +200,32 @@ const ClientDashboard = () => {
                           {activeMembers}/{system.max_members}
                         </span>
                       </div>
-                      <Button 
-                        className="w-full touch-manipulation"
-                        onClick={() => handleJoinSystem(system.id)}
-                        disabled={activeMembers >= system.max_members || isJoining || userHasPendingRequest}
-                      >
-                        {isJoining ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Joining...
-                          </>
-                        ) : userHasPendingRequest ? (
-                          "Request Pending"
-                        ) : activeMembers >= system.max_members ? (
-                          "Full"
-                        ) : (
-                          "Join System"
-                        )}
-                      </Button>
+                      {userHasPendingRequest ? (
+                        <Button 
+                          className="w-full"
+                          variant="destructive"
+                          onClick={() => handleCancelRequest(system.id)}
+                        >
+                          Cancel Request
+                        </Button>
+                      ) : (
+                        <Button 
+                          className="w-full touch-manipulation"
+                          onClick={() => handleJoinSystem(system.id)}
+                          disabled={activeMembers >= system.max_members || isJoining}
+                        >
+                          {isJoining ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Joining...
+                            </>
+                          ) : activeMembers >= system.max_members ? (
+                            "Full"
+                          ) : (
+                            "Join System"
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
