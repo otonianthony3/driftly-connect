@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,7 +28,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
     queryKey: ['members', thriftSystemId],
     queryFn: async () => {
       console.log("Fetching members for system:", thriftSystemId);
-      const { data, error } = await supabase
+      const { data: memberships, error } = await supabase
         .from('memberships')
         .select(`
           *,
@@ -40,12 +41,24 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
         .eq('thrift_system_id', thriftSystemId);
 
       if (error) throw error;
-      return data as Membership[];
+
+      // Filter out duplicate pending requests from the same user
+      const uniqueMemberships = memberships.reduce((acc: Membership[], current) => {
+        const existingMember = acc.find(
+          (item) => item.user_id === current.user_id && item.status === 'pending'
+        );
+        if (!existingMember) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
+
+      return uniqueMemberships as Membership[];
     },
   });
 
   const memberActionMutation = useMutation({
-    mutationFn: async ({ memberId, action, role }: { memberId: string; action: 'approve' | 'remove' | 'promote' | 'demote'; role?: string }) => {
+    mutationFn: async ({ memberId, action, role }: { memberId: string; action: 'approve' | 'reject' | 'remove' | 'promote' | 'demote'; role?: string }) => {
       console.log(`Performing ${action} action on member:`, memberId);
       
       if (action === 'approve') {
@@ -57,7 +70,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
           })
           .eq('id', memberId);
         if (error) throw error;
-      } else if (action === 'remove') {
+      } else if (action === 'reject' || action === 'remove') {
         const { error } = await supabase
           .from('memberships')
           .delete()
@@ -73,7 +86,8 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['members', thriftSystemId] });
-      toast.success(`Member ${variables.action}d successfully`);
+      const actionText = variables.action === 'reject' ? 'rejected' : `${variables.action}d`;
+      toast.success(`Member request ${actionText} successfully`);
     },
     onError: (error) => {
       console.error('Error performing member action:', error);
@@ -81,7 +95,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
     },
   });
 
-  const handleMemberAction = (memberId: string, action: 'approve' | 'remove' | 'promote' | 'demote', role?: string) => {
+  const handleMemberAction = (memberId: string, action: 'approve' | 'reject' | 'remove' | 'promote' | 'demote', role?: string) => {
     memberActionMutation.mutate({ memberId, action, role });
   };
 
@@ -134,12 +148,21 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
                 </TableCell>
                 <TableCell className="space-x-2">
                   {member.status === 'pending' ? (
-                    <Button 
-                      size="sm"
-                      onClick={() => handleMemberAction(member.id, 'approve')}
-                    >
-                      Approve
-                    </Button>
+                    <>
+                      <Button 
+                        size="sm"
+                        onClick={() => handleMemberAction(member.id, 'approve')}
+                      >
+                        Approve
+                      </Button>
+                      <Button 
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleMemberAction(member.id, 'reject')}
+                      >
+                        Reject
+                      </Button>
+                    </>
                   ) : (
                     <>
                       {member.role !== 'admin' && (
