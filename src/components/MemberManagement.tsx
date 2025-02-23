@@ -38,16 +38,23 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
             role
           )
         `)
-        .eq('thrift_system_id', thriftSystemId);
+        .eq('thrift_system_id', thriftSystemId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       // Filter out duplicate pending requests from the same user
       const uniqueMemberships = memberships.reduce((acc: Membership[], current) => {
-        const existingMember = acc.find(
-          (item) => item.user_id === current.user_id && item.status === 'pending'
-        );
-        if (!existingMember) {
+        // Only check for duplicates in pending requests
+        if (current.status === 'pending') {
+          const existingMember = acc.find(
+            (item) => item.user_id === current.user_id && item.status === 'pending'
+          );
+          if (!existingMember) {
+            acc.push(current);
+          }
+        } else {
+          // Include all non-pending members
           acc.push(current);
         }
         return acc;
@@ -62,36 +69,64 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
       console.log(`Performing ${action} action on member:`, memberId);
       
       if (action === 'approve') {
+        // First, verify the member isn't already in the system
+        const { data: existingMember } = await supabase
+          .from('memberships')
+          .select('id')
+          .eq('thrift_system_id', thriftSystemId)
+          .eq('user_id', memberId)
+          .eq('status', 'active')
+          .single();
+
+        if (existingMember) {
+          throw new Error('Member is already in the system');
+        }
+
+        // Update the pending request to active
         const { error } = await supabase
           .from('memberships')
           .update({ 
             status: 'active',
-            join_date: new Date().toISOString()
+            join_date: new Date().toISOString(),
+            role: 'member'
           })
           .eq('id', memberId);
+
         if (error) throw error;
       } else if (action === 'reject' || action === 'remove') {
+        // Delete the membership entry
         const { error } = await supabase
           .from('memberships')
           .delete()
           .eq('id', memberId);
+
         if (error) throw error;
       } else if (action === 'promote' || action === 'demote') {
         const { error } = await supabase
           .from('memberships')
           .update({ role })
           .eq('id', memberId);
+
         if (error) throw error;
       }
     },
     onSuccess: (_, variables) => {
+      // Immediately invalidate the query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['members', thriftSystemId] });
-      const actionText = variables.action === 'reject' ? 'rejected' : `${variables.action}d`;
-      toast.success(`Member request ${actionText} successfully`);
+      
+      const actionText = {
+        approve: 'approved',
+        reject: 'rejected',
+        remove: 'removed',
+        promote: 'promoted',
+        demote: 'demoted'
+      }[variables.action];
+      
+      toast.success(`Member ${actionText} successfully`);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error performing member action:', error);
-      toast.error('Failed to perform action on member');
+      toast.error(error.message || 'Failed to perform action on member');
     },
   });
 
