@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +21,19 @@ const ThriftSystemDetails = () => {
   const isMobile = useIsMobile();
   const [showPreferenceDialog, setShowPreferenceDialog] = useState(false);
   const [selectedBankAccount, setSelectedBankAccount] = useState<any>(null);
+
+  const { data: bankAccounts, isLoading: isLoadingBankAccounts } = useQuery({
+    queryKey: ['bankAccounts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bank_accounts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: system, isLoading, error } = useQuery({
     queryKey: ['thriftSystem', id],
@@ -73,7 +85,6 @@ const ThriftSystemDetails = () => {
     setSelectedBankAccount(null);
   };
 
-  // Handle invalid ID case
   if (!id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -85,7 +96,6 @@ const ThriftSystemDetails = () => {
     );
   }
 
-  // Handle loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -94,7 +104,6 @@ const ThriftSystemDetails = () => {
     );
   }
 
-  // Handle error state
   if (error) {
     toast.error("Failed to load thrift system details");
     navigate('/client/dashboard');
@@ -218,15 +227,17 @@ const ThriftSystemDetails = () => {
 
       <div className={`grid gap-6 ${isMobile ? '' : 'md:grid-cols-2'} mb-8`}>
         <ContributionTracker thriftSystemId={system?.id || ''} />
-        <MemberManagement thriftSystemId={system?.id || ''} />
+        <MemberManagement thriftSystemId={system?.id || ''} key={system?.id} />
         {renderDisbursementSection()}
-        {!selectedBankAccount && (
+        
+        {(selectedBankAccount || (!bankAccounts || bankAccounts.length === 0)) ? (
+          <BankAccountForm 
+            existingAccount={selectedBankAccount}
+            onSuccess={handleBankAccountSuccess}
+          />
+        ) : (
           <BankAccountList onEdit={handleEditBankAccount} />
         )}
-        <BankAccountForm 
-          existingAccount={selectedBankAccount}
-          onSuccess={handleBankAccountSuccess}
-        />
       </div>
 
       {showPreferenceDialog && system && (

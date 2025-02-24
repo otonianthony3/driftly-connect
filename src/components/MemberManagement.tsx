@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,6 +26,8 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
   const { data: members, isLoading } = useQuery({
     queryKey: ['members', thriftSystemId],
     queryFn: async () => {
+      if (!thriftSystemId) return [];
+      
       console.log("Fetching members for system:", thriftSystemId);
       const { data: memberships, error } = await supabase
         .from('memberships')
@@ -39,7 +40,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
           )
         `)
         .eq('thrift_system_id', thriftSystemId)
-        .order('created_at', { ascending: false });
+        .order('join_date', { ascending: false });
 
       if (error) throw error;
 
@@ -62,6 +63,8 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
 
       return uniqueMemberships as Membership[];
     },
+    enabled: Boolean(thriftSystemId),
+    staleTime: 1000 * 60 // 1 minute
   });
 
   const memberActionMutation = useMutation({
@@ -178,9 +181,17 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-4">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Member Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
     );
   }
 
@@ -213,7 +224,7 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="flex items-center gap-1">
+                  <Badge variant="outline" className="flex items-center gap-1 w-fit">
                     <Shield className="h-3 w-3" />
                     {member.role || 'member'}
                   </Badge>
@@ -291,6 +302,13 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
                 </TableCell>
               </TableRow>
             ))}
+            {(!members || members.length === 0) && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                  No members found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
