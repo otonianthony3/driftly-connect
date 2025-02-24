@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,13 +57,21 @@ const ThriftSystemDetails = () => {
 
       return data;
     },
-    enabled: Boolean(id), // Only run query when id is available
+    enabled: Boolean(id),
     retry: 1,
     meta: {
       errorMessage: "Failed to load thrift system details"
     },
-    staleTime: 1000 * 60 * 5 // 5 minutes
+    staleTime: 1000 * 60 * 5
   });
+
+  const handleEditBankAccount = (account: any) => {
+    setSelectedBankAccount(account);
+  };
+
+  const handleBankAccountSuccess = () => {
+    setSelectedBankAccount(null);
+  };
 
   // Handle invalid ID case
   if (!id) {
