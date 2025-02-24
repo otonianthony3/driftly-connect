@@ -20,6 +20,7 @@ const ThriftSystemDetails = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [showPreferenceDialog, setShowPreferenceDialog] = useState(false);
+  const [selectedBankAccount, setSelectedBankAccount] = useState<any>(null);
 
   const { data: system, isLoading, error } = useQuery({
     queryKey: ['thriftSystem', id],
@@ -210,8 +211,13 @@ const ThriftSystemDetails = () => {
         <ContributionTracker thriftSystemId={system?.id || ''} />
         <MemberManagement thriftSystemId={system?.id || ''} />
         {renderDisbursementSection()}
-        <BankAccountForm />
-        <BankAccountList />
+        {!selectedBankAccount && (
+          <BankAccountList onEdit={handleEditBankAccount} />
+        )}
+        <BankAccountForm 
+          existingAccount={selectedBankAccount}
+          onSuccess={handleBankAccountSuccess}
+        />
       </div>
 
       {showPreferenceDialog && system && (

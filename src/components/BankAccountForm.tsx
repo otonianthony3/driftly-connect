@@ -8,7 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export default function BankAccountForm() {
+interface BankAccount {
+  id?: string;
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+}
+
+interface BankAccountFormProps {
+  existingAccount?: BankAccount | null;
+  onSuccess?: () => void;
+}
+
+export default function BankAccountForm({ existingAccount, onSuccess }: BankAccountFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -26,6 +38,14 @@ export default function BankAccountForm() {
     getUserId();
   }, []);
 
+  useEffect(() => {
+    if (existingAccount) {
+      setBankName(existingAccount.bank_name);
+      setAccountNumber(existingAccount.account_number);
+      setAccountName(existingAccount.account_name);
+    }
+  }, [existingAccount]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) {
@@ -36,20 +56,52 @@ export default function BankAccountForm() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("bank_accounts").insert({
-        bank_name: bankName,
-        account_number: accountNumber,
-        account_name: accountName,
-        user_id: userId,
-      });
+      if (existingAccount?.id) {
+        // Update existing account
+        const { error } = await supabase
+          .from("bank_accounts")
+          .update({
+            bank_name: bankName,
+            account_number: accountNumber,
+            account_name: accountName,
+          })
+          .eq('id', existingAccount.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Bank account details updated successfully");
+      } else {
+        // Check if user already has a bank account
+        const { data: existingAccounts, error: checkError } = await supabase
+          .from("bank_accounts")
+          .select("id")
+          .eq("user_id", userId);
 
-      toast.success("Bank account details saved successfully");
+        if (checkError) throw checkError;
+
+        if (existingAccounts && existingAccounts.length > 0) {
+          toast.error("You already have a bank account registered");
+          return;
+        }
+
+        // Create new account
+        const { error } = await supabase
+          .from("bank_accounts")
+          .insert({
+            bank_name: bankName,
+            account_number: accountNumber,
+            account_name: accountName,
+            user_id: userId,
+          });
+
+        if (error) throw error;
+        toast.success("Bank account details saved successfully");
+      }
+
       queryClient.invalidateQueries({ queryKey: ["bankAccounts"] });
       setBankName("");
       setAccountNumber("");
       setAccountName("");
+      if (onSuccess) onSuccess();
     } catch (error: any) {
       toast.error(error.message || "Failed to save bank account details");
     } finally {
@@ -60,7 +112,9 @@ export default function BankAccountForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bank Account Details</CardTitle>
+        <CardTitle>
+          {existingAccount ? "Edit Bank Account" : "Add Bank Account"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -95,7 +149,7 @@ export default function BankAccountForm() {
           </div>
 
           <Button type="submit" disabled={isSubmitting || !userId}>
-            {isSubmitting ? "Saving..." : "Save Bank Details"}
+            {isSubmitting ? "Saving..." : existingAccount ? "Update Bank Details" : "Save Bank Details"}
           </Button>
         </form>
       </CardContent>
