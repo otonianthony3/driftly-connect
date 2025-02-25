@@ -55,3 +55,45 @@ export interface Payment {
   updated_at: string;
   metadata?: Record<string, any>;
 }
+
+export interface ContributionWithSystem {
+  amount: number;
+  status: string;
+  created_at: string;
+  thrift_systems: {
+    name: string;
+  };
+}
+
+export interface PayoutWithSystem {
+  amount: number;
+  status: string;
+  scheduled_date: string;
+  completed_date: string | null;
+  thrift_systems: {
+    name: string;
+  };
+}
+
+export interface ContributionWithMember {
+  amount: number;
+  status: string;
+  created_at: string;
+  memberships: {
+    profiles: {
+      full_name: string | null;
+    } | null;
+  } | null;
+}
+
+export interface PayoutWithMember {
+  amount: number;
+  status: string;
+  scheduled_date: string;
+  completed_date: string | null;
+  member: {
+    profiles: {
+      full_name: string | null;
+    } | null;
+  } | null;
+}

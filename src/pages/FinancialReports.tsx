@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,15 @@ import FinancialReportDetail from "@/components/FinancialReportDetail";
 
 const FinancialReports = () => {
   const [selectedThriftSystem, setSelectedThriftSystem] = useState<string>("all");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    fetchCurrentUser();
+  }, []);
 
   // Fetch user's thrift systems
   const { data: thriftSystems, isLoading: loadingThriftSystems } = useQuery({
@@ -36,11 +45,10 @@ const FinancialReports = () => {
     }
   });
 
-  const isSystemAdmin = (systemId: string) => {
-    const system = thriftSystems?.find(s => s.id === systemId);
-    if (!system) return false;
-    
-    return system.admin_id === supabase.auth.getUser().then(({ data }) => data.user?.id);
+  const isSystemAdmin = (systemId: string): boolean => {
+    if (!currentUserId || !thriftSystems) return false;
+    const system = thriftSystems.find(s => s.id === systemId);
+    return system?.admin_id === currentUserId;
   };
 
   return (
