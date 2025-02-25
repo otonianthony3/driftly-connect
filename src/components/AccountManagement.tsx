@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,61 @@ const AccountManagement = () => {
   const navigate = useNavigate();
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [disabledReason, setDisabledReason] = useState("");
+
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Check if user is a member of any group
+        const { data: memberships, error: membershipError } = await supabase
+          .from('memberships')
+          .select('id, status')
+          .eq('user_id', user.id);
+
+        if (membershipError) throw membershipError;
+
+        // Check if user is an admin of any active group
+        const { data: adminGroups, error: adminError } = await supabase
+          .from('group_members')
+          .select(`
+            id, 
+            role,
+            groups (
+              id,
+              status
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('role', 'admin');
+
+        if (adminError) throw adminError;
+
+        const hasActiveMemberships = memberships && memberships.length > 0;
+        const hasActiveAdminGroups = adminGroups && adminGroups.some(
+          group => group.groups && group.groups.status === 'active'
+        );
+
+        if (hasActiveMemberships) {
+          setIsDisabled(true);
+          setDisabledReason("You cannot deactivate your account while you are a member of one or more thrift systems.");
+        } else if (hasActiveAdminGroups) {
+          setIsDisabled(true);
+          setDisabledReason("You cannot deactivate your account while you are an admin of active groups.");
+        } else {
+          setIsDisabled(false);
+          setDisabledReason("");
+        }
+      } catch (error) {
+        console.error("Error checking user status:", error);
+      }
+    };
+
+    checkUserStatus();
+  }, []);
 
   const handleDeactivateAccount = async () => {
     try {
@@ -65,9 +121,15 @@ const AccountManagement = () => {
             This action can be reversed by contacting support.
           </p>
           
+          {isDisabled && (
+            <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md">
+              {disabledReason}
+            </div>
+          )}
+          
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="destructive">
+              <Button variant="destructive" disabled={isDisabled}>
                 Deactivate Account
               </Button>
             </DialogTrigger>

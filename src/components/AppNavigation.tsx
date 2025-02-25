@@ -1,4 +1,5 @@
-import { Users as UserIcon, DollarSign as DollarSignIcon, Bell as BellIcon, LogOut as LogOutIcon, UserCircle as UserCircleIcon,Settings as SettingsIcon } from "lucide-react";
+
+import { Users as UserIcon, DollarSign as DollarSignIcon, LogOut as LogOutIcon, UserCircle as UserCircleIcon, Settings as SettingsIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -58,10 +59,10 @@ export function AppNavigation() {
     { title: "Client Dashboard", url: "/client/dashboard", icon: UserIcon },
     { title: "Register", url: "/register", icon: UserIcon }, // Added Register Page
     { title: "Admin Dashboard", url: "/admin/dashboard", icon: SettingsIcon }, // Added Admin Dashboard
-    { title: "Thrift System Details", url: "/thrift/details", icon: SettingsIcon }, // Added Thrift System Details
+    // Removed "Thrift System Details" menu item
     { title: "Payout History", url: "/payouts/history", icon: DollarSignIcon },
     { title: "Payout Management", url: "/admin/payouts", icon: DollarSignIcon }, // Added Payout Management
-    { title: "Notifications", url: "/notifications", icon: BellIcon },
+    // Removed "Notifications" menu item
     { title: "Profile", url: "/profile", icon: UserCircleIcon }
   ];
   
@@ -131,5 +132,5 @@ export function AppNavigation() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-          );
-        }
+  );
+}
