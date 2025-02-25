@@ -625,4 +625,26 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] mb-6">
-                  <ResponsiveContainer width="100%" height
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={reportData?.pieChartData || []}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => `$${value}`} />
+                      <Bar dataKey="value" fill="#8884d8" name="Contribution Total" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+      </Tabs>
+    </div>
+  );
+};
+
+export default FinancialReportDetail;
