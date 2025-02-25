@@ -12,6 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Toolti
 import { Download, FileSpreadsheet, Loader2, ArrowDownToLine, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ContributionWithSystem, PayoutWithSystem, ContributionWithMember, PayoutWithMember } from "@/types/database";
 
 interface FinancialReportDetailProps {
   thriftSystemId?: string;
@@ -37,34 +38,62 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
         if (!userId) throw new Error("User not authenticated");
 
         // Get user's contributions and payouts for the selected period
-        const { data: contributions, error: contribError } = await supabase
+        const { data: contributionsData, error: contribError } = await supabase
           .from('contributions')
           .select(`
             amount, 
             status, 
             created_at,
-            thrift_systems!inner(name)
+            memberships (
+              thrift_system_id,
+              thrift_systems (
+                name
+              )
+            )
           `)
-          .eq('user_id', userId)
+          .eq('memberships.user_id', userId)
           .gte('created_at', getPeriodStartDate(reportPeriod, selectedYear))
           .order('created_at', { ascending: false });
 
         if (contribError) throw contribError;
 
-        const { data: payouts, error: payoutError } = await supabase
+        // Transform data to have the format we need
+        const contributions = (contributionsData || []).map(contrib => ({
+          amount: contrib.amount,
+          status: contrib.status,
+          created_at: contrib.created_at,
+          thrift_systems: {
+            name: contrib.memberships?.thrift_systems?.name || "Unknown"
+          }
+        })) as ContributionWithSystem[];
+
+        const { data: payoutsData, error: payoutError } = await supabase
           .from('payouts')
           .select(`
             amount, 
             status, 
             scheduled_date, 
             completed_date,
-            thrift_systems!inner(name)
+            thrift_system_id,
+            thrift_systems (
+              name
+            )
           `)
           .eq('member_id', userId)
           .gte('scheduled_date', getPeriodStartDate(reportPeriod, selectedYear))
           .order('scheduled_date', { ascending: false });
 
         if (payoutError) throw payoutError;
+
+        const payouts = (payoutsData || []).map(payout => ({
+          amount: payout.amount,
+          status: payout.status,
+          scheduled_date: payout.scheduled_date,
+          completed_date: payout.completed_date,
+          thrift_systems: {
+            name: payout.thrift_systems?.name || "Unknown"
+          }
+        })) as PayoutWithSystem[];
 
         // Process data for charts
         const monthlyContributions = processMonthlyData(contributions, 'amount', 'created_at');
@@ -108,32 +137,47 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
         if (thriftError) throw thriftError;
 
         // Get all contributions for this thrift system
-        const { data: contributions, error: contribError } = await supabase
+        const { data: contributionsData, error: contribError } = await supabase
           .from('contributions')
           .select(`
             amount, 
             status, 
             created_at,
-            memberships!inner(
-              profiles(full_name)
+            memberships (
+              user_id,
+              profiles (
+                full_name
+              )
             )
           `)
-          .eq('thrift_system_id', thriftSystemId)
+          .eq('memberships.thrift_system_id', thriftSystemId)
           .gte('created_at', getPeriodStartDate(reportPeriod, selectedYear))
           .order('created_at', { ascending: false });
 
         if (contribError) throw contribError;
 
+        const contributions = (contributionsData || []).map(contrib => ({
+          amount: contrib.amount,
+          status: contrib.status,
+          created_at: contrib.created_at,
+          memberships: {
+            profiles: contrib.memberships?.profiles || null
+          }
+        })) as ContributionWithMember[];
+
         // Get all payouts for this thrift system
-        const { data: payouts, error: payoutError } = await supabase
+        const { data: payoutsData, error: payoutError } = await supabase
           .from('payouts')
           .select(`
             amount, 
             status, 
             scheduled_date, 
             completed_date,
-            member:member_id(
-              profiles(full_name)
+            member:member_id (
+              id,
+              profiles (
+                full_name
+              )
             )
           `)
           .eq('thrift_system_id', thriftSystemId)
@@ -141,6 +185,14 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
           .order('scheduled_date', { ascending: false });
 
         if (payoutError) throw payoutError;
+
+        const payouts = (payoutsData || []).map(payout => ({
+          amount: payout.amount,
+          status: payout.status,
+          scheduled_date: payout.scheduled_date,
+          completed_date: payout.completed_date,
+          member: payout.member || null
+        })) as PayoutWithMember[];
 
         // Process data for charts
         const monthlyContributions = processMonthlyData(contributions, 'amount', 'created_at');
@@ -474,7 +526,7 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
                         <TableCell className="font-medium">
                           {thriftSystemId 
                             ? contribution.memberships?.profiles?.full_name || "Unknown"
-                            : contribution.thrift_systems?.name || "Unknown"
+                            : (contribution as any).thrift_systems?.name || "Unknown"
                           }
                         </TableCell>
                         <TableCell>${contribution.amount.toLocaleString()}</TableCell>
@@ -527,7 +579,7 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
                         <TableCell className="font-medium">
                           {thriftSystemId 
                             ? payout.member?.profiles?.full_name || "Unknown"
-                            : payout.thrift_systems?.name || "Unknown"
+                            : (payout as any).thrift_systems?.name || "Unknown"
                           }
                         </TableCell>
                         <TableCell>${payout.amount.toLocaleString()}</TableCell>
@@ -584,8 +636,6 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                
-                {/* Could add a detailed member table here */}
               </CardContent>
             </Card>
           </TabsContent>
