@@ -1,3 +1,4 @@
+
 export interface ThriftSystem {
   id: string;
   name: string;
@@ -25,4 +26,32 @@ export interface Membership {
     avatar_url: string | null;
     role: string;
   };
+}
+
+export interface PaymentMethod {
+  id: string;
+  user_id: string;
+  type: 'card' | 'bank_account' | 'mobile_money' | 'crypto';
+  last4: string;
+  expiry?: string;
+  brand?: string;
+  name?: string;
+  is_default: boolean;
+  created_at: string;
+}
+
+export interface Payment {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  description: string;
+  status: 'pending' | 'processing' | 'succeeded' | 'failed';
+  payment_method_id?: string;
+  gateway: string;
+  gateway_reference?: string;
+  contribution_id?: string;
+  created_at: string;
+  updated_at: string;
+  metadata?: Record<string, any>;
 }

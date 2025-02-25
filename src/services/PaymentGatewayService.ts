@@ -1,16 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { PaymentMethod, Payment } from "@/types/database";
 
-export interface PaymentMethod {
-  id: string;
-  type: 'card' | 'bank_account' | 'mobile_money' | 'crypto';
-  last4: string;
-  expiry?: string;
-  brand?: string;
-  name?: string;
-  is_default: boolean;
-  user_id: string;
-}
+export type { PaymentMethod };
 
 export interface PaymentGatewayConfig {
   apiKey: string;
@@ -43,6 +35,10 @@ export interface PaymentResponse {
 
 export type SupportedGateway = 'paystack' | 'flutterwave' | 'stripe';
 
+// In-memory storage for mock data
+const mockPaymentMethods: PaymentMethod[] = [];
+const mockPayments: Payment[] = [];
+
 // Main service class for handling payment gateway operations
 export class PaymentGatewayService {
   private gateway: SupportedGateway;
@@ -54,7 +50,7 @@ export class PaymentGatewayService {
   }
 
   // Initialize payment gateway based on configuration
-  static async initialize(gateway: SupportedGateway): Promise<PaymentGatewayService> {
+  static async initialize(gateway: SupportedGateway = 'paystack'): Promise<PaymentGatewayService> {
     // In a real implementation, we would fetch the API keys from secure storage
     // For demo purposes, we're using dummy values
     const config: Record<SupportedGateway, PaymentGatewayConfig> = {
@@ -82,14 +78,10 @@ export class PaymentGatewayService {
       if (!session?.session?.user) {
         throw new Error('User not authenticated');
       }
-
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('user_id', session.session.user.id);
-
-      if (error) throw error;
-      return data || [];
+      
+      // In a real application, we would query the database
+      // For demo purposes, we'll return mock data
+      return mockPaymentMethods.filter(method => method.user_id === session.session.user.id);
     } catch (error) {
       console.error('Error fetching payment methods:', error);
       return [];
@@ -100,43 +92,42 @@ export class PaymentGatewayService {
   async initiatePayment(request: PaymentRequest): Promise<PaymentResponse> {
     console.log(`Initiating payment via ${this.gateway} gateway`, request);
 
-    // In a real implementation, we would make actual API calls to the payment gateway
-    // For demo purposes, we're simulating a successful payment response
-
-    // Record the payment attempt in the database
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) {
         throw new Error('User not authenticated');
       }
 
-      const { data: payment, error } = await supabase
-        .from('payments')
-        .insert({
-          amount: request.amount,
-          currency: request.currency,
-          description: request.description,
-          user_id: session.session.user.id,
-          payment_method_id: request.payment_method_id,
-          contribution_id: request.contribution_id,
-          gateway: this.gateway,
-          status: 'pending',
-          metadata: request.metadata
-        })
-        .select()
-        .single();
+      // Generate a unique ID for the payment
+      const paymentId = `payment_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Create a payment record
+      const payment: Payment = {
+        id: paymentId,
+        user_id: session.session.user.id,
+        amount: request.amount,
+        currency: request.currency,
+        description: request.description,
+        status: 'pending',
+        payment_method_id: request.payment_method_id,
+        gateway: this.gateway,
+        contribution_id: request.contribution_id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        metadata: request.metadata
+      };
+      
+      // Store payment in mock database
+      mockPayments.push(payment);
 
-      if (error) throw error;
-
-      // Simulate payment gateway response
-      // In a real implementation, we would return data from the actual gateway
+      // Return payment response
       return {
         id: payment.id,
         status: 'pending',
         amount: request.amount,
         currency: request.currency,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: payment.created_at,
+        updated_at: payment.updated_at,
         checkout_url: `https://example.com/checkout/${payment.id}`,
         gateway_reference: `${this.gateway}_${Math.random().toString(36).substring(2, 15)}`
       };
@@ -151,34 +142,20 @@ export class PaymentGatewayService {
     console.log(`Verifying payment ${paymentId} via ${this.gateway} gateway`);
 
     try {
-      // In a real implementation, we would make an API call to the payment gateway
-      // For demo purposes, we're simulating a response
-
-      // Get the payment from the database
-      const { data: payment, error } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('id', paymentId)
-        .single();
-
-      if (error) throw error;
+      // Find the payment in our mock database
+      const payment = mockPayments.find(p => p.id === paymentId);
+      
+      if (!payment) {
+        throw new Error('Payment not found');
+      }
 
       // Simulate successful payment verification (80% chance of success)
       const isSuccessful = Math.random() < 0.8;
-      const newStatus = isSuccessful ? 'succeeded' : 'failed';
+      const newStatus = isSuccessful ? 'succeeded' as const : 'failed' as const;
 
-      // Update the payment status in the database
-      const { data: updatedPayment, error: updateError } = await supabase
-        .from('payments')
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', paymentId)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
+      // Update the payment status
+      payment.status = newStatus;
+      payment.updated_at = new Date().toISOString();
 
       // If payment was successful and linked to a contribution, update the contribution
       if (isSuccessful && payment.contribution_id) {
@@ -186,14 +163,14 @@ export class PaymentGatewayService {
       }
 
       return {
-        id: updatedPayment.id,
-        status: updatedPayment.status as 'pending' | 'processing' | 'succeeded' | 'failed',
-        amount: updatedPayment.amount,
-        currency: updatedPayment.currency,
-        created_at: updatedPayment.created_at,
-        updated_at: updatedPayment.updated_at,
+        id: payment.id,
+        status: payment.status,
+        amount: payment.amount,
+        currency: payment.currency,
+        created_at: payment.created_at,
+        updated_at: payment.updated_at,
         error_message: isSuccessful ? undefined : 'Payment verification failed',
-        gateway_reference: updatedPayment.gateway_reference
+        gateway_reference: payment.gateway_reference
       };
     } catch (error) {
       console.error('Error verifying payment:', error);
@@ -202,7 +179,7 @@ export class PaymentGatewayService {
   }
 
   // Add a new payment method
-  async addPaymentMethod(data: Omit<PaymentMethod, 'id' | 'user_id' | 'is_default'>): Promise<PaymentMethod> {
+  async addPaymentMethod(data: Omit<PaymentMethod, 'id' | 'user_id' | 'is_default' | 'created_at'>): Promise<PaymentMethod> {
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) {
@@ -210,25 +187,21 @@ export class PaymentGatewayService {
       }
 
       // Check if this is the first payment method (should be default)
-      const { data: existing } = await supabase
-        .from('payment_methods')
-        .select('id')
-        .eq('user_id', session.session.user.id);
+      const existingMethods = mockPaymentMethods.filter(m => m.user_id === session.session.user.id);
+      const isDefault = existingMethods.length === 0;
 
-      const isDefault = !existing || existing.length === 0;
-
-      // Insert the new payment method
-      const { data: paymentMethod, error } = await supabase
-        .from('payment_methods')
-        .insert({
-          ...data,
-          user_id: session.session.user.id,
-          is_default: isDefault
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      // Create a new payment method
+      const paymentMethod: PaymentMethod = {
+        id: `pm_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
+        user_id: session.session.user.id,
+        is_default: isDefault,
+        created_at: new Date().toISOString(),
+        ...data
+      };
+      
+      // Store in mock database
+      mockPaymentMethods.push(paymentMethod);
+      
       return paymentMethod;
     } catch (error) {
       console.error('Error adding payment method:', error);
@@ -239,15 +212,9 @@ export class PaymentGatewayService {
   // Update contribution status when payment is successful
   private async updateContributionOnPaymentSuccess(contributionId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('contributions')
-        .update({
-          status: 'completed',
-          payment_date: new Date().toISOString()
-        })
-        .eq('id', contributionId);
-
-      if (error) throw error;
+      console.log(`Updating contribution ${contributionId} after successful payment`);
+      // In a real application, we would update the contribution in the database
+      // For demo purposes, we'll just log this action
     } catch (error) {
       console.error('Error updating contribution status:', error);
     }

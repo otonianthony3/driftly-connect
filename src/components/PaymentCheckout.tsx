@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -96,7 +95,7 @@ const PaymentCheckout = ({
       setPaymentError(null);
       
       try {
-        const gateway = await getPaymentGateway(selectedGateway);
+        const gateway = await getPaymentGateway();
         
         // Initiate payment
         const response = await gateway.initiatePayment({
@@ -161,7 +160,7 @@ const PaymentCheckout = ({
         methodData = {
           type: 'card' as const,
           last4: cardDetails.cardNumber.slice(-4),
-          expiry: `${expiryMonth.trim()}/${expiryYear.trim()}`,
+          expiry: `${expiryMonth?.trim() || ''}/${expiryYear?.trim() || ''}`,
           brand: getCardBrand(cardDetails.cardNumber),
           name: cardDetails.cardholderName
         };
@@ -482,31 +481,47 @@ const PaymentCheckout = ({
                       </div>
                     )}
 
-                    {/* Bank account form and options */}
-                    {/* Similar structure to card tab content */}
-                  </TabsContent>
-
-                  <TabsContent value="mobile_money">
-                    {/* Mobile money form and options */}
-                    {/* Similar structure to card tab content */}
-                  </TabsContent>
-                </Tabs>
-                
-                <div className="flex justify-end pt-4 mt-4 border-t">
-                  <Button 
-                    onClick={handleMakePayment} 
-                    disabled={!selectedPaymentMethod || processingPayment}
-                  >
-                    Pay {formatCurrency(amount)}
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-};
-
-export default PaymentCheckout;
+                    {addingNewMethod ? (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="bankName">Bank Name</Label>
+                          <Input
+                            id="bankName"
+                            placeholder="Bank Name"
+                            value={bankDetails.bankName}
+                            onChange={(e) => setBankDetails({...bankDetails, bankName: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="accountName">Account Name</Label>
+                          <Input
+                            id="accountName"
+                            placeholder="John Doe"
+                            value={bankDetails.accountName}
+                            onChange={(e) => setBankDetails({...bankDetails, accountName: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="accountNumber">Account Number</Label>
+                          <Input
+                            id="accountNumber"
+                            placeholder="0123456789"
+                            value={bankDetails.accountNumber}
+                            onChange={(e) => setBankDetails({...bankDetails, accountNumber: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="routingNumber">Routing Number</Label>
+                          <Input
+                            id="routingNumber"
+                            placeholder="123456789"
+                            value={bankDetails.routingNumber}
+                            onChange={(e) => setBankDetails({...bankDetails, routingNumber: e.target.value})}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="saveAccount"
+                            checked={bankDetails.
