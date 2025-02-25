@@ -173,11 +173,9 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
             status, 
             scheduled_date, 
             completed_date,
-            member:member_id (
-              id,
-              profiles (
-                full_name
-              )
+            member_id,
+            profiles:member_id(
+              full_name
             )
           `)
           .eq('thrift_system_id', thriftSystemId)
@@ -186,13 +184,17 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
 
         if (payoutError) throw payoutError;
 
-        const payouts = (payoutsData || []).map(payout => ({
-          amount: payout.amount,
-          status: payout.status,
-          scheduled_date: payout.scheduled_date,
-          completed_date: payout.completed_date,
-          member: payout.member || null
-        })) as PayoutWithMember[];
+        // Transform data to match PayoutWithMember type
+        const payouts = (payoutsData || []).map(payout => {
+          return {
+            amount: payout.amount,
+            status: payout.status,
+            scheduled_date: payout.scheduled_date,
+            completed_date: payout.completed_date,
+            member_id: payout.member_id,
+            profiles: typeof payout.profiles === 'object' ? payout.profiles : null
+          };
+        }) as PayoutWithMember[];
 
         // Process data for charts
         const monthlyContributions = processMonthlyData(contributions, 'amount', 'created_at');
@@ -578,7 +580,7 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
                       <TableRow key={index}>
                         <TableCell className="font-medium">
                           {thriftSystemId 
-                            ? payout.member?.profiles?.full_name || "Unknown"
+                            ? payout.profiles?.full_name || "Unknown"
                             : (payout as any).thrift_systems?.name || "Unknown"
                           }
                         </TableCell>
@@ -623,26 +625,4 @@ const FinancialReportDetail = ({ thriftSystemId, period = "monthly" }: Financial
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] mb-6">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={reportData?.pieChartData || []}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => `$${value}`} />
-                      <Bar dataKey="value" fill="#8884d8" name="Contribution Total" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-      </Tabs>
-    </div>
-  );
-};
-
-export default FinancialReportDetail;
+                  <ResponsiveContainer width="100%" height

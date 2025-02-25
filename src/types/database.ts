@@ -91,9 +91,8 @@ export interface PayoutWithMember {
   status: string;
   scheduled_date: string;
   completed_date: string | null;
-  member: {
-    profiles: {
-      full_name: string | null;
-    } | null;
+  member_id?: string;
+  profiles?: {
+    full_name: string | null;
   } | null;
 }
