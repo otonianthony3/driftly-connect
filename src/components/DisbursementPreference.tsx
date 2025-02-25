@@ -81,25 +81,31 @@ export const DisbursementPreference = ({
 
       if (prefsError) throw prefsError;
       
-      // Get already assigned positions
+      // Get already assigned positions - since there's no position column in payouts,
+      // we'll use scheduled payouts as assigned positions and map their array index + 1 as position
       const { data: payoutsData, error: payoutsError } = await supabase
         .from('payouts')
         .select(`
           member_id,
-          position,
           status,
           profiles (
             full_name
           )
         `)
         .eq('thrift_system_id', thriftSystemId)
-        .order('position');
+        .order('scheduled_date');
         
       if (payoutsError) throw payoutsError;
       
+      // Map the payouts data to include a position number based on array index
+      const assignedPositions = payoutsData ? payoutsData.map((payout, index) => ({
+        ...payout,
+        position: index + 1
+      })) : [];
+      
       return {
         preferences: prefsData || [],
-        assignedPositions: payoutsData || []
+        assignedPositions: assignedPositions
       };
     },
     enabled: open
