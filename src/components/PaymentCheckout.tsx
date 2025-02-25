@@ -524,4 +524,149 @@ const PaymentCheckout = ({
                           <input
                             type="checkbox"
                             id="saveAccount"
-                            checked={bankDetails.
+                            checked={bankDetails.saveAccount}
+                            onChange={(e) => setBankDetails({...bankDetails, saveAccount: e.target.checked})}
+                            className="rounded border-gray-300"
+                          />
+                          <Label htmlFor="saveAccount">Save account for future payments</Label>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-2 mt-4">
+                          <Button variant="outline" onClick={() => setAddingNewMethod(false)}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleAddPaymentMethod} disabled={addPaymentMethodMutation.isPending}>
+                            {addPaymentMethodMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              "Save Account"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start mb-4"
+                        onClick={() => setAddingNewMethod(true)}
+                      >
+                        Add New Bank Account
+                      </Button>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="mobile_money">
+                    {!addingNewMethod && paymentMethods && paymentMethods.length > 0 && (
+                      <div className="mb-4">
+                        <RadioGroup
+                          value={selectedPaymentMethod}
+                          onValueChange={setSelectedPaymentMethod}
+                          className="space-y-2"
+                        >
+                          {paymentMethods
+                            .filter(method => method.type === 'mobile_money')
+                            .map(account => (
+                              <div key={account.id} className="flex items-center space-x-2 border p-3 rounded-md">
+                                <RadioGroupItem value={account.id} id={account.id} />
+                                <Label htmlFor={account.id} className="flex-1 cursor-pointer">
+                                  <div className="flex justify-between">
+                                    <span>{account.name}</span>
+                                    <span className="text-muted-foreground text-sm">
+                                      •••• {account.last4}
+                                    </span>
+                                  </div>
+                                </Label>
+                              </div>
+                            ))}
+                        </RadioGroup>
+                      </div>
+                    )}
+
+                    {addingNewMethod ? (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="phoneNumber">Phone Number</Label>
+                          <Input
+                            id="phoneNumber"
+                            placeholder="+233 XX XXX XXXX"
+                            value={mobileMoneyDetails.phoneNumber}
+                            onChange={(e) => setMobileMoneyDetails({...mobileMoneyDetails, phoneNumber: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="provider">Provider</Label>
+                          <Select
+                            value={mobileMoneyDetails.provider}
+                            onValueChange={(value) => setMobileMoneyDetails({...mobileMoneyDetails, provider: value})}
+                          >
+                            <SelectTrigger id="provider">
+                              <SelectValue placeholder="Select provider" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="mtn">MTN Mobile Money</SelectItem>
+                              <SelectItem value="vodafone">Vodafone Cash</SelectItem>
+                              <SelectItem value="airtel">Airtel Money</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="saveMobileNumber"
+                            checked={mobileMoneyDetails.saveMobileNumber}
+                            onChange={(e) => setMobileMoneyDetails({...mobileMoneyDetails, saveMobileNumber: e.target.checked})}
+                            className="rounded border-gray-300"
+                          />
+                          <Label htmlFor="saveMobileNumber">Save for future payments</Label>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-2 mt-4">
+                          <Button variant="outline" onClick={() => setAddingNewMethod(false)}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleAddPaymentMethod} disabled={addPaymentMethodMutation.isPending}>
+                            {addPaymentMethodMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              "Save"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start mb-4"
+                        onClick={() => setAddingNewMethod(true)}
+                      >
+                        Add Mobile Money
+                      </Button>
+                    )}
+                  </TabsContent>
+                </Tabs>
+                
+                <div className="flex justify-end pt-4 mt-4 border-t">
+                  <Button 
+                    onClick={handleMakePayment} 
+                    disabled={!selectedPaymentMethod || processingPayment}
+                  >
+                    Pay {formatCurrency(amount)}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default PaymentCheckout;
