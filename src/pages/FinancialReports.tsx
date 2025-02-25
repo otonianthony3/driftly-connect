@@ -162,4 +162,31 @@ const FinancialReports = () => {
                       </div>
                       <div>
                         <p className="font-medium">Diversify Your Thrift Systems</p>
-                        <p className="text-
+                        <p className="text-muted-foreground">
+                          Consider joining multiple thrift systems with different payout schedules to create a steady cash flow throughout the year.
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <span className="text-primary">3</span>
+                      </div>
+                      <div>
+                        <p className="font-medium">Set Up Automatic Payments</p>
+                        <p className="text-muted-foreground">
+                          Configure automatic payments to ensure you never miss a contribution deadline, maintaining your perfect record.
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
+    </div>
+  );
+};
+
+export default FinancialReports;
