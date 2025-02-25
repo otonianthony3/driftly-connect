@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -87,11 +87,11 @@ const FinancialReports = () => {
   });
 
   // Set first system as default when data loads
-  useState(() => {
+  useEffect(() => {
     if (systems && systems.length > 0 && !selectedSystem) {
       setSelectedSystem(systems[0].id);
     }
-  });
+  }, [systems, selectedSystem]);
 
   // Fetch financial data for the selected system
   const { data: financialData, isLoading: loadingFinancial } = useQuery({
@@ -493,3 +493,277 @@ const FinancialReports = () => {
                   <span className={financialData.summary.pendingContributions > 0 ? "text-amber-500" : "text-green-500"}>
                     {formatCurrency(financialData.summary.pendingContributions)} pending
                   </span>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Payouts</p>
+                    <p className="text-2xl font-bold mt-1">
+                      {formatCurrency(financialData.summary.totalPayouts)}
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                    <CreditCard className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs text-muted-foreground">
+                  <span className="text-green-500">
+                    {financialData.monthlySummary.length} payout cycles
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Current Balance</p>
+                    <p className="text-2xl font-bold mt-1">
+                      {formatCurrency(financialData.summary.currentBalance)}
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                    <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs">
+                  <span className={financialData.summary.currentBalance >= 0 ? "text-green-500" : "text-red-500"}>
+                    {financialData.summary.currentBalance >= 0 ? "Positive" : "Negative"} balance
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Member Participation</p>
+                    <p className="text-2xl font-bold mt-1">
+                      {Math.round(financialData.summary.paymentRate)}%
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                    <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                </div>
+                <div className="mt-4 text-xs text-muted-foreground">
+                  <span className="text-purple-500">
+                    {financialData.summary.activeMembers} of {financialData.summary.memberCount} members active
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Main Content Based on Report Type */}
+          <Tabs value={reportType} onValueChange={setReportType} className="mt-8">
+            <TabsList className="grid grid-cols-4 w-full max-w-md mx-auto mb-8">
+              <TabsTrigger value="summary">Summary</TabsTrigger>
+              <TabsTrigger value="contributions">Contributions</TabsTrigger>
+              <TabsTrigger value="payouts">Payouts</TabsTrigger>
+              <TabsTrigger value="members">Members</TabsTrigger>
+            </TabsList>
+            
+            {/* Summary Tab */}
+            <TabsContent value="summary" className="space-y-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Financial Overview</CardTitle>
+                </CardHeader>
+                <CardContent className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={financialData.monthlySummary}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="displayMonth" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                      <Legend />
+                      <Bar dataKey="contributionsPaid" name="Contributions" fill="#8884d8" />
+                      <Bar dataKey="payoutsTotal" name="Payouts" fill="#82ca9d" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Participation Rate</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={financialData.monthlySummary}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="displayMonth" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => `${Math.round(Number(value))}%`} />
+                        <Legend />
+                        <Line type="monotone" dataKey="participationRate" name="Participation Rate" stroke="#8884d8" activeDot={{ r: 8 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment Method Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={financialData.paymentMethods}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {financialData.paymentMethods.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => `${Number(value)}%`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            {/* Contributions Tab */}
+            <TabsContent value="contributions">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contribution History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Member</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Payment Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {financialData.rawData.contributions.map((contrib: any) => (
+                          <TableRow key={contrib.id}>
+                            <TableCell>{contrib.memberships?.profiles?.full_name || "Unknown"}</TableCell>
+                            <TableCell>{formatCurrency(contrib.amount)}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                contrib.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 
+                                'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                              }`}>
+                                {contrib.status === 'completed' ? 'Paid' : 'Pending'}
+                              </span>
+                            </TableCell>
+                            <TableCell>{new Date(contrib.due_date).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              {contrib.payment_date ? new Date(contrib.payment_date).toLocaleDateString() : '-'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Payouts Tab */}
+            <TabsContent value="payouts">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payout History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Member</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Scheduled Date</TableHead>
+                          <TableHead>Completed Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {financialData.rawData.payouts.map((payout: any) => (
+                          <TableRow key={payout.id}>
+                            <TableCell>{payout.profiles?.full_name || "Unknown"}</TableCell>
+                            <TableCell>{formatCurrency(payout.amount)}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                payout.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 
+                                payout.status === 'processing' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                                'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                              }`}>
+                                {payout.status === 'completed' ? 'Completed' : 
+                                 payout.status === 'processing' ? 'Processing' : 'Scheduled'}
+                              </span>
+                            </TableCell>
+                            <TableCell>{new Date(payout.scheduled_date).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              {payout.completed_date ? new Date(payout.completed_date).toLocaleDateString() : '-'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Members Tab */}
+            <TabsContent value="members">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Member Contribution Analysis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Member</TableHead>
+                          <TableHead>Total Contribution</TableHead>
+                          <TableHead>Paid</TableHead>
+                          <TableHead>Pending</TableHead>
+                          <TableHead>Payment Rate</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {financialData.memberBreakdown.map((member: any) => (
+                          <TableRow key={member.memberId}>
+                            <TableCell>{member.memberName}</TableCell>
+                            <TableCell>{formatCurrency(member.totalAmount)}</TableCell>
+                            <TableCell>{formatCurrency(member.paidAmount)}</TableCell>
+                            <TableCell>{formatCurrency(member.pendingAmount)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2 dark:bg-gray-700">
+                                  <div 
+                                    className="bg-primary h-2.5 rounded-full" 
+                                    style={{ width: `${Math.min(100, member.paymentRate)}%` }}
+                
