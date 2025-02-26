@@ -38,16 +38,13 @@ const AccountManagement = () => {
 
         if (membershipError) throw membershipError;
 
-        // Check if user is an admin of any active group
+        // Check if user is an admin of any group
         const { data: adminGroups, error: adminError } = await supabase
           .from('group_members')
           .select(`
             id, 
             role,
-            groups (
-              id,
-              status
-            )
+            group_id
           `)
           .eq('user_id', user.id)
           .eq('role', 'admin');
@@ -55,16 +52,14 @@ const AccountManagement = () => {
         if (adminError) throw adminError;
 
         const hasActiveMemberships = memberships && memberships.length > 0;
-        const hasActiveAdminGroups = adminGroups && adminGroups.some(
-          group => group.groups && group.groups.status === 'active'
-        );
+        const hasAdminGroups = adminGroups && adminGroups.length > 0;
 
         if (hasActiveMemberships) {
           setIsDisabled(true);
           setDisabledReason("You cannot deactivate your account while you are a member of one or more thrift systems.");
-        } else if (hasActiveAdminGroups) {
+        } else if (hasAdminGroups) {
           setIsDisabled(true);
-          setDisabledReason("You cannot deactivate your account while you are an admin of active groups.");
+          setDisabledReason("You cannot deactivate your account while you are an admin of groups.");
         } else {
           setIsDisabled(false);
           setDisabledReason("");
