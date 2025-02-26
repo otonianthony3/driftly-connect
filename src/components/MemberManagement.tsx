@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -105,14 +106,17 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
 
         if (updateError) throw updateError;
 
-        // Create notification for approved member
-        const { error: notificationError } = await supabase
-          .from('notifications')
-          .insert({
-            user_id: membershipData.user_id,
-            type: 'membership_approved',
-            message: 'Your membership request has been approved! Please add your bank account details for disbursement.'
-          });
+        // Use the RPC function to create a notification
+        const { error: notificationError } = await supabase.rpc(
+          'create_notification',
+          {
+            p_user_id: membershipData.user_id,
+            p_template_name: 'membership_approved',
+            p_data: JSON.stringify({
+              thrift_system_id: thriftSystemId
+            })
+          }
+        );
 
         if (notificationError) throw notificationError;
 
@@ -136,13 +140,17 @@ const MemberManagement = ({ thriftSystemId }: MemberManagementProps) => {
 
         // Only create rejection notification if action is reject (not remove)
         if (action === 'reject') {
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              user_id: membershipData.user_id,
-              type: 'membership_rejected',
-              message: 'Your membership request has been rejected.'
-            });
+          // Use the RPC function to create a notification
+          const { error: notificationError } = await supabase.rpc(
+            'create_notification',
+            {
+              p_user_id: membershipData.user_id,
+              p_template_name: 'membership_rejected',
+              p_data: JSON.stringify({
+                thrift_system_id: thriftSystemId
+              })
+            }
+          );
 
           if (notificationError) throw notificationError;
         }

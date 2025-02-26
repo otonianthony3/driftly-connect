@@ -10,6 +10,7 @@ import { ThriftSystem } from "@/types/database";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppNavigation } from "@/components/AppNavigation";
 import { useState, useEffect } from "react";
+import ThriftSystemSearch from "@/components/ThriftSystemSearch";
 
 const ClientDashboard = () => {
   const { toast } = useToast();
@@ -173,6 +174,11 @@ const ClientDashboard = () => {
             <p className="text-muted-foreground mt-2">
               Browse and join available thrift systems
             </p>
+          </div>
+
+          {/* Add the ThriftSystemSearch component here */}
+          <div className="mb-8">
+            <ThriftSystemSearch />
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
