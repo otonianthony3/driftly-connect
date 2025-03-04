@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ThriftSystem } from "@/types/database";
 
-const ThriftSystemSearch = () => {
+const ThriftSystemSearch = ({ isClientView = false }: { isClientView?: boolean }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -50,7 +51,16 @@ const ThriftSystemSearch = () => {
   });
 
   const handleViewSystem = (systemId: string) => {
-    navigate(`/thrift-system/${systemId}`);
+    // Navigate to the client view if isClientView is true
+    if (isClientView) {
+      navigate(`/thrift-system-view/${systemId}`);
+    } else {
+      navigate(`/thrift-system/${systemId}`);
+    }
+  };
+
+  const handleRowClick = (systemId: string) => {
+    handleViewSystem(systemId);
   };
 
   return (
@@ -63,7 +73,7 @@ const ThriftSystemSearch = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
             <Input
               placeholder="Search by name..."
               value={searchTerm}
@@ -113,17 +123,21 @@ const ThriftSystemSearch = () => {
               </TableHeader>
               <TableBody>
                 {systems?.map((system) => (
-                  <TableRow key={system.id}>
+                  <TableRow 
+                    key={system.id} 
+                    className="cursor-pointer hover:bg-muted"
+                    onClick={() => handleRowClick(system.id)}
+                  >
                     <TableCell>{system.name}</TableCell>
                     <TableCell>
                       <Badge variant={system.status === 'active' ? 'default' : 'secondary'}>
                         {system.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>${system.contribution_amount}</TableCell>
+                    <TableCell>₦{system.contribution_amount}</TableCell>
                     <TableCell>{system.payout_schedule}</TableCell>
                     <TableCell>{new Date(system.created_at || '').toLocaleDateString()}</TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Button
                         size="sm"
                         onClick={() => handleViewSystem(system.id)}

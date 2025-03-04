@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppNavigation } from "@/components/AppNavigation";
 import { useState, useEffect } from "react";
 import ThriftSystemSearch from "@/components/ThriftSystemSearch";
+import { useNavigate } from "react-router-dom";
 
 const ClientDashboard = () => {
   const { toast } = useToast();
@@ -18,6 +18,7 @@ const ClientDashboard = () => {
   const [joiningSystemIds, setJoiningSystemIds] = useState<string[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [cancellingIds, setCancellingIds] = useState<string[]>([]);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const fetchUser = async () => {
@@ -176,9 +177,9 @@ const ClientDashboard = () => {
             </p>
           </div>
 
-          {/* Add the ThriftSystemSearch component here */}
+          {/* Add the ThriftSystemSearch component with isClientView prop */}
           <div className="mb-8">
-            <ThriftSystemSearch />
+            <ThriftSystemSearch isClientView={true} />
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -193,8 +194,12 @@ const ClientDashboard = () => {
               );
               
               return (
-                <Card key={system.id} className="flex flex-col">
-                  <CardHeader>
+                <Card 
+                  key={system.id} 
+                  className="flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => navigate(`/thrift-system-view/${system.id}`)}
+                >
+                  <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <CardTitle className="line-clamp-1">{system.name}</CardTitle>
                       {isActive && (
@@ -207,7 +212,7 @@ const ClientDashboard = () => {
                       {system.payout_schedule} contribution of ₦{system.contribution_amount}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-1">
+                  <CardContent className="flex-1 pt-4" onClick={(e) => e.stopPropagation()}>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Members</span>

@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,6 +15,7 @@ import Register from "./pages/Register";
 import AdminDashboard from "./pages/AdminDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import ThriftSystemDetails from "./pages/ThriftSystemDetails";
+import ThriftSystemView from "./pages/ThriftSystemView";
 import PayoutHistory from "./pages/PayoutHistory";
 import PayoutManagement from "./pages/PayoutManagement";
 import ProfileManagement from "./pages/ProfileManagement";
@@ -117,10 +117,6 @@ const SwipeHandler = () => {
   return <div {...handlers} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }} />;
 };
 
-
-
-
-
 // Helper component to conditionally render NotificationBell
 const ConditionalNotificationBell = () => {
   const location = useLocation();
@@ -160,6 +156,7 @@ const App = () => (
                 <Route path="admin/dashboard" element={<AdminDashboard />} />
                 <Route path="client/dashboard" element={<ClientDashboard />} />
                 <Route path="thrift-system/:id" element={<ThriftSystemDetails />} />
+                <Route path="thrift-system-view/:id" element={<ThriftSystemView />} />
                 <Route path="payouts/history" element={<PayoutHistory />} />
                 <Route path="admin/payouts" element={<PayoutManagement />} />
                 <Route path="profile" element={<ProfileManagement />} />
@@ -173,4 +170,3 @@ const App = () => (
 );
 
 export default App;
-
