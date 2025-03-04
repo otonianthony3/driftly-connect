@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -204,7 +205,7 @@ const ThriftSystemDetails = () => {
               {system.payout_schedule}
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-              ${system.contribution_amount} per cycle
+              ₦{system.contribution_amount} per cycle
             </p>
           </CardContent>
         </Card>
@@ -216,7 +217,7 @@ const ThriftSystemDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              ${system.contribution_amount * activeMembers.length}
+              ₦{system.contribution_amount * activeMembers.length}
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-2">
               Current cycle total

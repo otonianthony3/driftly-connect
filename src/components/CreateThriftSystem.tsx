@@ -152,7 +152,7 @@ if (tierError) throw tierError;
               name="contributionAmount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contribution Amount</FormLabel>
+                  <FormLabel>Contribution Amount (₦)</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="Enter amount" {...field} />
                   </FormControl>

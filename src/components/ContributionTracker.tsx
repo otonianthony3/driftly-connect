@@ -230,12 +230,12 @@ const ContributionTracker = ({ thriftSystemId }: ContributionTrackerProps) => {
           <div>
             <div className="flex justify-between mb-2">
               <span className="text-sm font-medium">Total Contributed</span>
-              <span className="text-sm font-medium">${totalContributed}</span>
+              <span className="text-sm font-medium">₦{totalContributed}</span>
             </div>
             <Progress value={progressPercentage} className="h-2" />
             <div className="flex justify-end mt-1">
               <span className="text-xs text-muted-foreground">
-                {progressPercentage.toFixed(0)}% of ${totalExpected}
+                {progressPercentage.toFixed(0)}% of ₦{totalExpected}
               </span>
             </div>
           </div>
@@ -249,7 +249,7 @@ const ContributionTracker = ({ thriftSystemId }: ContributionTrackerProps) => {
               </div>
               <div className="flex justify-between text-sm mb-4">
                 <span>Amount</span>
-                <span>${nextDueContribution.amount}</span>
+                <span>₦{nextDueContribution.amount}</span>
               </div>
               <Button 
                 className="w-full" 
@@ -275,7 +275,7 @@ const ContributionTracker = ({ thriftSystemId }: ContributionTrackerProps) => {
                       <span>{contribution.memberships?.profiles?.full_name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span>${contribution.amount}</span>
+                      <span>₦{contribution.amount}</span>
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         contribution.status === 'completed' 
                           ? 'bg-green-100 text-green-800'

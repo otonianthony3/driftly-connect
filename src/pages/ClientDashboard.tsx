@@ -204,7 +204,7 @@ const ClientDashboard = () => {
                       )}
                     </div>
                     <CardDescription>
-                      {system.payout_schedule} contribution of ${system.contribution_amount}
+                      {system.payout_schedule} contribution of ₦{system.contribution_amount}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1">
