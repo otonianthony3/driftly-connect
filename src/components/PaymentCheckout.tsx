@@ -256,7 +256,7 @@ const PaymentCheckout = ({
   };
 
   // Format currency for display
-  const formatCurrency = (value: number, curr = currency) => {
+  const formatCurrency = (value: number, curr = "NGN") => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: curr,

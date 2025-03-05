@@ -11,6 +11,7 @@ import { AppNavigation } from "@/components/AppNavigation";
 import { useState, useEffect } from "react";
 import ThriftSystemSearch from "@/components/ThriftSystemSearch";
 import { useNavigate } from "react-router-dom";
+import NotificationSettings from "@/components/NotificationSettings";
 
 const ClientDashboard = () => {
   const { toast } = useToast();
@@ -22,7 +23,7 @@ const ClientDashboard = () => {
   
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
       }
@@ -33,7 +34,6 @@ const ClientDashboard = () => {
   const { data: thriftSystems, isLoading } = useQuery({
     queryKey: ['thriftSystems'],
     queryFn: async () => {
-      console.log("Fetching thrift systems...");
       const { data, error } = await supabase
         .from('thrift_systems')
         .select(`
@@ -47,7 +47,6 @@ const ClientDashboard = () => {
             role
           )
         `);
-
       if (error) throw error;
       return data as ThriftSystem[];
     }
@@ -58,7 +57,6 @@ const ClientDashboard = () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
-      // Find the membership ID for this user and system
       const { data: membership, error: membershipError } = await supabase
         .from('memberships')
         .select('id')
@@ -70,7 +68,6 @@ const ClientDashboard = () => {
       if (membershipError) throw membershipError;
       if (!membership) throw new Error('Membership request not found');
 
-      // Delete the membership request
       const { error: deleteError } = await supabase
         .from('memberships')
         .delete()
@@ -105,11 +102,9 @@ const ClientDashboard = () => {
   const handleJoinSystem = async (systemId: string) => {
     try {
       setJoiningSystemIds(prev => [...prev, systemId]);
-
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
-      // Check if system has reached max members
       const system = thriftSystems?.find(s => s.id === systemId);
       const activeMembers = system?.memberships?.filter(m => m.status === 'active').length || 0;
       
@@ -153,10 +148,6 @@ const ClientDashboard = () => {
     }
   };
 
-  const handleCancelRequest = (systemId: string) => {
-    cancelRequestMutation.mutate(systemId);
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -177,7 +168,6 @@ const ClientDashboard = () => {
             </p>
           </div>
 
-          {/* Add the ThriftSystemSearch component with isClientView prop */}
           <div className="mb-8">
             <ThriftSystemSearch isClientView={true} />
           </div>
@@ -196,7 +186,14 @@ const ClientDashboard = () => {
               return (
                 <Card 
                   key={system.id} 
-                  className="flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
+                  className="flex flex-col cursor-pointer hover:shadow-lg transition-shadow active:scale-[0.99] transition-transform"
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      navigate(`/thrift-system-view/${system.id}`);
+                    }
+                  }}
                   onClick={() => navigate(`/thrift-system-view/${system.id}`)}
                 >
                   <CardHeader className="pb-2">
@@ -212,7 +209,7 @@ const ClientDashboard = () => {
                       {system.payout_schedule} contribution of ₦{system.contribution_amount}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-1 pt-4" onClick={(e) => e.stopPropagation()}>
+                  <CardContent className="flex-1 pt-4">
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Members</span>
@@ -224,7 +221,10 @@ const ClientDashboard = () => {
                         <Button 
                           className="w-full"
                           variant="destructive"
-                          onClick={() => handleCancelRequest(system.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelRequestMutation.mutate(system.id);
+                          }}
                           disabled={isCancelling}
                         >
                           {isCancelling ? (
@@ -239,7 +239,10 @@ const ClientDashboard = () => {
                       ) : (
                         <Button 
                           className="w-full touch-manipulation"
-                          onClick={() => handleJoinSystem(system.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleJoinSystem(system.id);
+                          }}
                           disabled={activeMembers >= system.max_members || isJoining}
                         >
                           {isJoining ? (

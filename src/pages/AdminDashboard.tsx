@@ -12,6 +12,7 @@ import { ThriftSystem } from "@/types/database";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+
 const AdminDashboard = () => {
   const [showCreateThrift, setShowCreateThrift] = useState(false);
   const navigate = useNavigate();
