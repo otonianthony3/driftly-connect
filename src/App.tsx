@@ -1,10 +1,9 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar"; 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
-import { useSwipeable } from "react-swipeable";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -77,46 +76,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return authenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-// Helper component to handle swipe navigation
-const SwipeHandler = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Define the navigation order for authenticated routes
-  const authenticatedRoutes = [
-    '/client/dashboard',
-    '/Admin/dashboard',
-    '/payouts/history',
-    '/notifications',
-    '/profile'
-    
-  ];
-
-  const handlers = useSwipeable({
-    onSwipedLeft: () => {
-      const currentIndex = authenticatedRoutes.indexOf(location.pathname);
-      if (currentIndex >= 0 && currentIndex < authenticatedRoutes.length - 1) {
-        navigate(authenticatedRoutes[currentIndex + 1]);
-      }
-    },
-    onSwipedRight: () => {
-      const currentIndex = authenticatedRoutes.indexOf(location.pathname);
-      if (currentIndex > 0) {
-        navigate(authenticatedRoutes[currentIndex - 1]);
-      }
-    },
-    preventScrollOnSwipe: true,
-    trackMouse: false
-  });
-
-  // Only apply swipe handlers to authenticated routes
-  if (!authenticatedRoutes.includes(location.pathname)) {
-    return null;
-  }
-
-  return <div {...handlers} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }} />;
-};
-
 // Helper component to conditionally render NotificationBell
 const ConditionalNotificationBell = () => {
   const location = useLocation();
@@ -141,7 +100,6 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>                       
-            <SwipeHandler />
             <ConditionalNotificationBell />
             <Routes>
               {/* Public Routes (No Sidebar) */}

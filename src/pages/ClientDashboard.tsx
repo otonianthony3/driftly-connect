@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThriftSystem } from "@/types/database";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -20,7 +20,7 @@ const ClientDashboard = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [cancellingIds, setCancellingIds] = useState<string[]>([]);
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -54,8 +54,12 @@ const ClientDashboard = () => {
 
   const cancelRequestMutation = useMutation({
     mutationFn: async (systemId: string) => {
+      console.log("Attempting cancellation for system:", systemId);
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
+      if (userError) {
+        console.error("User fetch error:", userError);
+        throw userError;
+      }
 
       const { data: membership, error: membershipError } = await supabase
         .from('memberships')
@@ -65,20 +69,56 @@ const ClientDashboard = () => {
         .eq('status', 'pending')
         .single();
 
-      if (membershipError) throw membershipError;
-      if (!membership) throw new Error('Membership request not found');
+      console.log("Fetched membership:", membership, membershipError);
+
+      if (membershipError || !membership) {
+        console.warn("Membership not found, treating as successful cancellation.");
+        return systemId;
+      }
 
       const { error: deleteError } = await supabase
         .from('memberships')
         .delete()
         .eq('id', membership.id);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Delete error:", deleteError);
+        throw deleteError;
+      }
 
+      console.log("Cancellation successful for system:", systemId);
       return systemId;
     },
-    onMutate: (systemId) => {
+    onMutate: (systemId: string) => {
       setCancellingIds(prev => [...prev, systemId]);
+      // Snapshot the previous data
+      const previousData = queryClient.getQueryData<ThriftSystem[]>(['thriftSystems']);
+      // Optimistically update the cache: remove any pending membership for this system
+      queryClient.setQueryData<ThriftSystem[]>(['thriftSystems'], oldData => {
+        if (!oldData) return oldData;
+        return oldData.map(system => {
+          if (system.id === systemId) {
+            return {
+              ...system,
+              memberships: system.memberships?.filter(m => !(m.user_id === currentUserId && m.status === 'pending')) || []
+            };
+          }
+          return system;
+        });
+      });
+      return { previousData };
+    },
+    onError: (error, systemId, context: any) => {
+      console.error("Error cancelling request:", error);
+      setCancellingIds(prev => prev.filter(id => id !== systemId));
+      if (context?.previousData) {
+        queryClient.setQueryData(['thriftSystems'], context.previousData);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to cancel join request. Please try again.",
+        variant: "destructive",
+      });
     },
     onSuccess: (systemId) => {
       queryClient.invalidateQueries({ queryKey: ['thriftSystems'] });
@@ -86,15 +126,6 @@ const ClientDashboard = () => {
       toast({
         title: "Request Cancelled",
         description: "Your join request has been cancelled successfully.",
-      });
-    },
-    onError: (error, systemId) => {
-      console.error("Error cancelling request:", error);
-      setCancellingIds(prev => prev.filter(id => id !== systemId));
-      toast({
-        title: "Error",
-        description: "Failed to cancel join request. Please try again.",
-        variant: "destructive",
       });
     }
   });
@@ -107,7 +138,7 @@ const ClientDashboard = () => {
 
       const system = thriftSystems?.find(s => s.id === systemId);
       const activeMembers = system?.memberships?.filter(m => m.status === 'active').length || 0;
-      
+
       if (activeMembers >= (system?.max_members || 0)) {
         toast({
           title: "System Full",
@@ -134,7 +165,7 @@ const ClientDashboard = () => {
         title: "Request Sent",
         description: "Your request to join the thrift system has been sent to the admin.",
       });
-      
+
       queryClient.invalidateQueries({ queryKey: ['thriftSystems'] });
     } catch (error) {
       console.error("Error joining system:", error);
@@ -178,14 +209,14 @@ const ClientDashboard = () => {
               const isActive = activeMembers === system.max_members;
               const isJoining = joiningSystemIds.includes(system.id);
               const isCancelling = cancellingIds.includes(system.id);
-              const userHasPendingRequest = system.memberships?.some(m => 
-                m.user_id === currentUserId && 
+              const userHasPendingRequest = system.memberships?.some(m =>
+                m.user_id === currentUserId &&
                 m.status === 'pending'
               );
-              
+
               return (
-                <Card 
-                  key={system.id} 
+                <Card
+                  key={system.id}
                   className="flex flex-col cursor-pointer hover:shadow-lg transition-shadow active:scale-[0.99] transition-transform"
                   role="button"
                   tabIndex={0}
@@ -218,7 +249,7 @@ const ClientDashboard = () => {
                         </span>
                       </div>
                       {userHasPendingRequest ? (
-                        <Button 
+                        <Button
                           className="w-full"
                           variant="destructive"
                           onClick={(e) => {
@@ -237,7 +268,7 @@ const ClientDashboard = () => {
                           )}
                         </Button>
                       ) : (
-                        <Button 
+                        <Button
                           className="w-full touch-manipulation"
                           onClick={(e) => {
                             e.stopPropagation();
