@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useEffect, useMemo } from "react";
+import { useReducer, useCallback, useEffect, useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AccountManagement from "@/components/AccountManagement";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Types and Initial State
+interface FormState {
+  fullName: string;
+  isDirty: boolean;
+  errors: Record<string, string>;
+}
+
+type FormAction =
+  | { type: "SET_FIELD"; field: string; value: string; validate?: (value: string) => string }
+  | { type: "SET_ERRORS"; errors: Record<string, string> }
+  | { type: "RESET"; payload?: Partial<FormState> };
+
+const initialFormState: FormState = {
+  fullName: "",
+  isDirty: false,
+  errors: {}
+};
 
 // Custom Hook: useAuth
 const useAuth = () => {
@@ -29,13 +47,13 @@ const useAuth = () => {
 const useAvatarHandler = (userId: string) => {
   const queryClient = useQueryClient();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  
+
   const { mutateAsync: uploadAvatar, status: uploadStatus } = useMutation({
     mutationFn: async (file: File) => {
       const fileExt = file.name.split(".").pop();
       const fileName = `avatar-${Date.now()}.${fileExt}`;
       const filePath = `${userId}/${fileName}`;
-
+      
       // Validate file
       const validTypes = ["image/jpeg", "image/png", "image/gif"];
       if (!validTypes.includes(file.type)) {
@@ -44,25 +62,25 @@ const useAvatarHandler = (userId: string) => {
       if (file.size > 2 * 1024 * 1024) {
         throw new Error("File size exceeds 2MB limit");
       }
-
+      
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true });
-
+      
       if (uploadError) throw uploadError;
-
+      
       // Update profile
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: filePath })
         .eq("id", userId);
-
+      
       if (updateError) throw updateError;
       return filePath;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["profile", userId]);
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
       toast.success("Avatar updated successfully");
     },
   });
@@ -77,8 +95,10 @@ const useAvatarHandler = (userId: string) => {
     }
   }, [uploadAvatar]);
 
-  useEffect(() => () => {
-    previewUrl && URL.revokeObjectURL(previewUrl);
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
   }, [previewUrl]);
 
   return {
@@ -115,10 +135,10 @@ const ProfileManagement = () => {
   const queryClient = useQueryClient();
   const { data: user, isLoading: authLoading } = useAuth();
   const [formState, dispatch] = useReducer(formReducer, initialFormState);
-  
+
   // Avatar Handling
   const { previewUrl, uploadStatus, handleFileChange } = useAvatarHandler(user?.id ?? "");
-
+  
   // Profile Query
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -131,6 +151,7 @@ const ProfileManagement = () => {
         .single();
       return data;
     },
+    enabled: !!user,
     onSuccess: (data) => {
       dispatch({ type: "RESET", payload: { fullName: data?.full_name || "" } });
     }
@@ -143,19 +164,19 @@ const ProfileManagement = () => {
       if (lastUpdate && Date.now() - +lastUpdate < 5000) {
         throw new Error("Please wait 5 seconds between updates");
       }
-
+      
       const { error } = await supabase
         .from("profiles")
         .update({ full_name: fullName.trim() })
         .eq("id", user?.id);
-
+      
       if (error?.code === "23505") throw new Error("Name already exists");
       if (error) throw error;
-      
+
       localStorage.setItem("lastProfileUpdate", Date.now().toString());
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["profile", user?.id]);
+      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
       toast.success("Profile updated");
       dispatch({ type: "RESET", payload: { isDirty: false } });
     }
@@ -163,7 +184,7 @@ const ProfileManagement = () => {
 
   // Form Validation
   const validateForm = useCallback(() => {
-    const errors: FormErrors = {};
+    const errors: Record<string, string> = {};
     if (!formState.fullName.trim()) {
       errors.fullName = "Required field";
     } else if (formState.fullName.length < 2) {
@@ -180,7 +201,7 @@ const ProfileManagement = () => {
     e.preventDefault();
     if (!validateForm()) return;
     updateProfile.mutate(formState.fullName);
-  }, [formState.fullName, validateForm]);
+  }, [formState.fullName, validateForm, updateProfile]);
 
   // Loading State
   if (authLoading || profileLoading) {
@@ -218,9 +239,9 @@ const ProfileManagement = () => {
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage 
-                    src={previewUrl || profile?.avatar_url} 
-                    alt={profile?.full_name || "User avatar"} 
+                  <AvatarImage
+                    src={previewUrl || profile?.avatar_url}
+                    alt={profile?.full_name || "User avatar"}
                   />
                   <AvatarFallback>
                     {profile?.full_name?.[0]?.toUpperCase() || "U"}
@@ -232,7 +253,7 @@ const ProfileManagement = () => {
                   </div>
                 )}
               </div>
-              
+
               <Label htmlFor="avatar" className="cursor-pointer">
                 <div className="px-4 py-2 border rounded-md hover:bg-muted transition-colors">
                   {uploadStatus === 'pending' ? "Uploading..." : "Change Avatar"}
@@ -247,7 +268,7 @@ const ProfileManagement = () => {
                 />
               </Label>
             </div>
-
+            
             {/* Name Input */}
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
@@ -271,7 +292,7 @@ const ProfileManagement = () => {
                 <p className="text-red-500 text-sm">{formState.errors.fullName}</p>
               )}
             </div>
-
+            
             {/* Form Actions */}
             <div className="flex gap-2">
               <Button
@@ -293,29 +314,9 @@ const ProfileManagement = () => {
           </form>
         </CardContent>
       </Card>
-
       <AccountManagement />
     </div>
   );
 };
 
-// Types and Initial State
-interface FormState {
-  fullName: string;
-  isDirty: boolean;
-  errors: Record<string, string>;
-}
-
-type FormAction = 
-  | { type: "SET_FIELD"; field: string; value: string; validate?: (value: string) => string }
-  | { type: "SET_ERRORS"; errors: Record<string, string> }
-  | { type: "RESET"; payload?: Partial<FormState> };
-
-const initialFormState: FormState = {
-  fullName: "",
-  isDirty: false,
-  errors: {}
-};
-
 export default ProfileManagement;
-
