@@ -1,11 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/types/supabase"; // Changed from @/types/supabase to @/lib/supabase
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Camera, Trash2, Grid, Crop } from "lucide-react";
+import { Camera, Trash2, Grid } from "lucide-react"; // Removed Crop from here
 import { toast } from "sonner";
-import ReactCrop, { Crop } from "react-image-crop";
+import ReactCrop from "react-image-crop"; // Import ReactCrop component without named import
+import type { Crop as CropType } from "react-image-crop"; // Import the type with a different name
 import "react-image-crop/dist/ReactCrop.css";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,7 +32,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ userId, coverImageUrl }) =>
   const [showDialog, setShowDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("upload");
   const [previousUploads, setPreviousUploads] = useState<string[]>([]);
-  const [crop, setCrop] = useState<Crop>({
+  const [crop, setCrop] = useState<CropType>({ // Use CropType instead of Crop
     unit: '%',
     width: 100,
     height: 100,
