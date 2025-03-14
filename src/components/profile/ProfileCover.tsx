@@ -1,35 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Camera, Trash2, Grid } from "lucide-react";
+import { Camera, Trash2, Grid, Crop } from "lucide-react";
+import { toast } from "sonner";
+import ReactCrop, { Crop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Mock supabase client for type safety (replace with your actual implementation)
-const supabase = {
-  storage: {
-    from: (bucket: string) => ({
-      list: (path: string, options?: any) => Promise.resolve({ data: [], error: null }),
-      upload: (path: string, file: File, options?: any) => Promise.resolve({ data: {}, error: null }),
-      getPublicUrl: (path: string) => ({ data: { publicUrl: "" } })
-    })
-  },
-  from: (table: string) => ({
-    update: (data: any) => ({
-      eq: (column: string, value: any) => Promise.resolve({ data: {}, error: null })
-    })
-  })
-};
-
-// Define a simple Crop interface (simplified from react-image-crop)
-interface CropArea {
-  unit: '%' | 'px';
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-}
 
 // Default cover images
 const DEFAULT_COVERS = [
@@ -52,7 +31,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ userId, coverImageUrl }) =>
   const [showDialog, setShowDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("upload");
   const [previousUploads, setPreviousUploads] = useState<string[]>([]);
-  const [crop, setCrop] = useState<CropArea>({
+  const [crop, setCrop] = useState<Crop>({
     unit: '%',
     width: 100,
     height: 100,
@@ -62,12 +41,6 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ userId, coverImageUrl }) =>
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
-
-  // Mock toast function
-  const toast = {
-    success: (message: string) => console.log(`Success: ${message}`),
-    error: (message: string) => console.error(`Error: ${message}`)
-  };
 
   // Fetch user's previous uploads
   useEffect(() => {
@@ -82,7 +55,7 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ userId, coverImageUrl }) =>
         if (error) throw error;
 
         // Get public URLs for all previous uploads
-        const urls = (data || [])
+        const urls = data
           .filter(file => file.name !== 'cover.jpg' && file.name !== 'cover.png')
           .map(file => supabase.storage.from("covers").getPublicUrl(`${userId}/${file.name}`).data.publicUrl);
 
@@ -318,7 +291,6 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ userId, coverImageUrl }) =>
     return 'h-48';
   };
 
-  // A simplified render method without the actual cropping UI
   return (
     <>
       <div 
@@ -417,16 +389,18 @@ const ProfileCover: React.FC<ProfileCoverProps> = ({ userId, coverImageUrl }) =>
             <TabsContent value="crop" className="p-4">
               {imageToCrop && (
                 <div className="flex flex-col items-center gap-4">
-                  <div className="relative">
-                    {/* Simplified crop preview */}
+                  <ReactCrop 
+                    crop={crop} 
+                    onChange={c => setCrop(c)}
+                    aspect={3/1}
+                  >
                     <img 
                       ref={imageRef}
                       src={imageToCrop} 
                       alt="Crop preview" 
                       className="max-h-80 object-contain"
                     />
-                    <div className="absolute inset-0 border-2 border-blue-500 pointer-events-none"></div>
-                  </div>
+                  </ReactCrop>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => {
                       URL.revokeObjectURL(imageToCrop);
